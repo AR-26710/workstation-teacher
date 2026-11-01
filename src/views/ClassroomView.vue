@@ -5,8 +5,8 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { S, save } from '../core/app'
-import { ART } from '../art'
-import { CH } from '../charts'
+import { ART } from '../lib/art'
+import { CH } from '../lib/charts'
 import { ATT } from '../core/state'
 import {
   allSeats,
@@ -25,14 +25,15 @@ import {
 import { monthBirthdays, rankMap, weekStars } from '../core/stats'
 import { WEEK, clamp, parseDate, todayStr } from '../core/utils'
 import { downloadFile, toCSV } from '../core/files'
-import { clsMode, attDate, gradeExam, view, REDUCED, MODES } from '../ui/classroom'
-import { railOpen, go } from '../ui/router'
-import { addPoint, addPointAll, floatHook, moveSeat, openStudent } from '../ui/actions'
+import { clsMode, attDate, gradeExam, view, REDUCED, MODES } from '../ui/classroom/mode'
+import { railOpen, go } from '../ui/shell/router'
+import { addPoint, addPointAll, moveSeat, openStudent } from '../ui/student/actions'
+import { floatHook } from '../ui/classroom/float'
 import { openStudentForm, openPointBoard, openDemoClear, openImportStudents } from '../ui/forms'
-import { toast } from '../ui/toast'
-import StudentAvatar from '../components/StudentAvatar.vue'
-import TeacherAvatar from '../components/TeacherAvatar.vue'
-import Icon from '../components/Icon.vue'
+import { toast } from '../ui/shell/toast'
+import StudentAvatar from '../components/student/StudentAvatar.vue'
+import TeacherAvatar from '../components/common/TeacherAvatar.vue'
+import Icon from '../components/common/Icon.vue'
 import type { Student } from '../core/types'
 
 const NS = 'http://www.w3.org/2000/svg'

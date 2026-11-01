@@ -1,13 +1,13 @@
 /**
  * 各类表单弹窗的统一入口
  */
-import { openModal } from './modal'
-import StudentFormModal from '../components/StudentFormModal.vue'
-import ExamFormModal from '../components/ExamFormModal.vue'
-import ImportStudentsModal from '../components/ImportStudentsModal.vue'
-import ScoreImportModal from '../components/ScoreImportModal.vue'
-import PointBoardModal from '../components/PointBoardModal.vue'
-import DemoClearModal from '../components/DemoClearModal.vue'
+import { openModal } from './shell/modal'
+import StudentFormModal from '../components/student/StudentFormModal.vue'
+import ExamFormModal from '../components/exam/ExamFormModal.vue'
+import ImportStudentsModal from '../components/student/ImportStudentsModal.vue'
+import ScoreImportModal from '../components/exam/ScoreImportModal.vue'
+import PointBoardModal from '../components/classroom/PointBoardModal.vue'
+import DemoClearModal from '../components/classroom/DemoClearModal.vue'
 import type { Student } from '../core/types'
 
 export function openStudentForm(st: Student | null, opts: { seat?: string | null } = {}): void {

@@ -5,8 +5,12 @@ import { createApp } from 'vue'
 import './styles/index.scss'
 import App from './App.vue'
 import { S, load, replaceState, startPersistence, isStorageOk } from './core/app'
-import { isPage, go } from './ui/router'
-import { toast } from './ui/toast'
+import { isPage, go } from './ui/shell/router'
+import { toast } from './ui/shell/toast'
+import { setNotifier } from './core/notify'
+
+// 把 Toast 注册为 core 层的通知实现（必须在任何业务代码跑起来之前）
+setNotifier(toast)
 
 const saved = load()
 if (saved) replaceState(saved)

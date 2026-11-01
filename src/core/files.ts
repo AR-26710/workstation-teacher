@@ -1,7 +1,7 @@
 /**
  * 文件下载、剪贴板、CSV / Excel 粘贴解析
  */
-import { toast } from '../ui/toast'
+import { notify } from './notify'
 
 export function downloadFile(name: string, content: string | Blob, type?: string): void {
   const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' })
@@ -26,14 +26,14 @@ export function copyText(t: string): void {
     ta.select()
     try {
       document.execCommand('copy')
-      toast('已复制')
+      notify('已复制')
     } catch {
-      toast('复制失败，请手动选择复制')
+      notify('复制失败，请手动选择复制')
     }
     ta.remove()
   }
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(t).then(() => toast('已复制'), fallback)
+    navigator.clipboard.writeText(t).then(() => notify('已复制'), fallback)
   } else fallback()
 }
 

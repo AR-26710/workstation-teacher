@@ -2,7 +2,7 @@
  * 示例班级数据（46 人虚构班级 + 4 次考试 + 考勤点评记录）
  * 内容全部随机生成，姓名、电话、家庭情况均为虚构。
  */
-import { ART } from '../art'
+import { ART } from '../lib/art'
 import { clamp, pad2, todayStr } from './utils'
 import { defaultState } from './state'
 import type { AppState, Exam, Student,Subject } from './types'

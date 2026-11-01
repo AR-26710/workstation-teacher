@@ -4,6 +4,7 @@
 import { S, save } from './app'
 import { downloadFile, readFileAsText } from './files'
 import { migrate } from './state'
+import { STORE_KEY } from './state'
 import { pad2, todayStr } from './utils'
 import type { AppState } from './types'
 
@@ -35,7 +36,7 @@ export async function parseBackup(file: File): Promise<AppState | null> {
 
 export function storageSizeKB(): number {
   try {
-    return ((localStorage.getItem('bzr-workbench-v1') || '') as string).length / 1024
+    return ((localStorage.getItem(STORE_KEY) || '') as string).length / 1024
   } catch {
     return 0
   }

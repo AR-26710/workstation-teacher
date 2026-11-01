@@ -4,8 +4,8 @@
 import { reactive, watch } from 'vue'
 import { migrate, defaultState, STORE_KEY } from './state'
 import { Store } from './storage'
+import { notify } from './notify'
 import type { AppState } from './types'
-import { toast } from '../ui/toast'
 
 export const S = reactive<AppState>(defaultState())
 
@@ -14,7 +14,7 @@ let persisted = false
 
 function write(): void {
   const ok = Store.set(STORE_KEY, JSON.stringify(S))
-  if (!ok) toast('存储空间不足，请到设置里导出备份')
+  if (!ok) notify('存储空间不足，请到设置里导出备份')
 }
 
 /** 写入磁盘（默认防抖 250ms，now=true 立即写） */

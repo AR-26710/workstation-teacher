@@ -13,10 +13,11 @@ import {
 } from '../core/select'
 import { rankMap } from '../core/stats'
 import { downloadFile, toCSV } from '../core/files'
-import { openStudent, openStudentForm } from '../ui/actions'
+import { openStudent } from '../ui/student/actions'
+import { openStudentForm } from '../ui/forms'
 import { openImportStudents } from '../ui/forms'
-import StudentAvatar from '../components/StudentAvatar.vue'
-import Icon from '../components/Icon.vue'
+import StudentAvatar from '../components/student/StudentAvatar.vue'
+import Icon from '../components/common/Icon.vue'
 
 const STU_FILTERS: [string, string][] = [
   ['all', '全部'],
