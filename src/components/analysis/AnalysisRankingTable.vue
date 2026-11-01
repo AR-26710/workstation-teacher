@@ -40,12 +40,12 @@ function chDown(m: MoveItem): string {
 </script>
 
 <template>
-  <div class="panel" style="padding: 20px 0 6px">
+  <div class="panel" style="padding: 20px 0 6px; display: flex; flex-direction: column">
     <div style="padding: 0 20px">
       <div class="panel-title">班级排名</div>
       <div class="panel-sub">点姓名打开学生档案</div>
     </div>
-    <div style="max-height: 460px; overflow: auto">
+    <div style="flex: 1 1 460px; min-height: 0; overflow: auto">
       <table class="tbl">
         <thead>
           <tr>
