@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** 学生档案：名单、筛选、排序、导入导出 */
 import { computed, ref } from 'vue'
-import { S } from '../core/app'
+import { S } from '@core/app'
 import {
   daysToBirthday,
   latestExam,
@@ -10,14 +10,14 @@ import {
   seatText,
   stuById,
   studentsByNo
-} from '../core/select'
-import { rankMap } from '../core/stats'
-import { downloadFile, toCSV } from '../core/files'
-import { openStudent } from '../ui/student/actions'
-import { openStudentForm } from '../ui/forms'
-import { openImportStudents } from '../ui/forms'
-import StudentAvatar from '../components/student/StudentAvatar.vue'
-import Icon from '../components/common/Icon.vue'
+} from '@core/select'
+import { rankMap } from '@core/stats'
+import { downloadFile, toCSV } from '@core/files'
+import { openStudent } from '@ui/student/actions'
+import { openStudentForm } from '@ui/forms'
+import { openImportStudents } from '@ui/forms'
+import StudentAvatar from '@components/student/StudentAvatar.vue'
+import Icon from '@components/common/Icon.vue'
 
 const STU_FILTERS: [string, string][] = [
   ['all', '全部'],

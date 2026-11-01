@@ -51,10 +51,30 @@ function walk(dir, out = []) {
 const files = walk(SRC)
 const rel = (f) => path.relative(SRC, f)
 
-/** 解析相对导入到真实文件（支持目录 index 解析） */
+/** 路径别名 → src 下真实目录（与 vite.config.ts / tsconfig.app.json 保持一致） */
+const ALIAS = {
+  '@core': 'core',
+  '@components': 'components',
+  '@ui': 'ui',
+  '@views': 'views',
+  '@lib': 'lib',
+  '@styles': 'styles',
+  '@': ''
+}
+
+/** 解析导入到真实文件（支持相对路径、别名路径、目录 index 解析） */
 function resolve(fromFile, spec) {
-  if (!spec.startsWith('.')) return null
-  let base = path.resolve(path.dirname(fromFile), spec)
+  let base = null
+  if (spec.startsWith('.')) {
+    base = path.resolve(path.dirname(fromFile), spec)
+  } else if (spec.startsWith('@')) {
+    const [head, ...rest] = spec.split('/')
+    const dir = ALIAS[head]
+    if (dir === undefined) return null
+    base = path.join(SRC, dir, ...rest)
+  } else {
+    return null
+  }
   const cands = [base, base + '.ts', base + '.vue', path.join(base, 'index.ts')]
   for (const c of cands) {
     if (fs.existsSync(c) && fs.statSync(c).isFile()) return c
@@ -68,14 +88,15 @@ const errors = []
 const graph = new Map() // file -> Set<file>
 
 for (const f of files) {
-  const src = fs.readFileSync(f, 'utf8')
+  // 剥离块注释，避免注释里的 from '...' 被误识别为导入
+  const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
   const deps = new Set()
   let m
   IMPORT_RE.lastIndex = 0
   while ((m = IMPORT_RE.exec(src))) {
     const spec = m[1]
     const target = resolve(f, spec)
-    if (!target) continue // 非相对路径（vue 等）跳过
+    if (!target) continue // 第三方包（vue 等）跳过
     deps.add(target)
   }
   graph.set(f, deps)

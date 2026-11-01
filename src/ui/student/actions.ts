@@ -6,13 +6,13 @@
  * 以免形成 ui/actions → ui/forms → 组件 → ui/actions 的环。
  */
 import { ref } from 'vue'
-import { openDrawer } from '../shell/drawer'
-import { toast } from '../shell/toast'
-import { S, save } from '../../core/app'
-import { stuById, autoGroups, seatMap, allSeats, pointsOf } from '../../core/select'
-import { uid, todayStr } from '../../core/utils'
-import { floatHook } from '../classroom/float'
-import type { Student } from '../../core/types'
+import { openDrawer } from '@ui/shell/drawer'
+import { toast } from '@ui/shell/toast'
+import { S, save } from '@core/app'
+import { stuById, autoGroups, seatMap, allSeats, pointsOf } from '@core/select'
+import { uid, todayStr } from '@core/utils'
+import { floatHook } from '@ui/classroom/float'
+import type { Student } from '@core/types'
 
 /** 档案抽屉当前标签 */
 export const drawerTab = ref<string>('overview')

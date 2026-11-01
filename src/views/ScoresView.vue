@@ -1,18 +1,18 @@
 <script setup lang="ts">
 /** 成绩录入：考试列表 + 表格录入（支持 Excel 整块粘贴） */
 import { computed, ref, watch } from 'vue'
-import { S, save } from '../core/app'
-import { examById, examsSorted, studentsByNo } from '../core/select'
-import { entryProgress, examFull, rankMap } from '../core/stats'
-import { parseScore, setScore } from '../core/importers'
-import { downloadFile, parseTable, toCSV } from '../core/files'
-import { fmtNum } from '../core/utils'
-import { go } from '../ui/shell/router'
-import { openExamForm, openScoreImport } from '../ui/forms'
-import { toast } from '../ui/shell/toast'
-import TeacherAvatar from '../components/common/TeacherAvatar.vue'
-import Icon from '../components/common/Icon.vue'
-import type { Exam } from '../core/types'
+import { S, save } from '@core/app'
+import { examById, examsSorted, studentsByNo } from '@core/select'
+import { entryProgress, examFull, rankMap } from '@core/stats'
+import { parseScore, setScore } from '@core/importers'
+import { downloadFile, parseTable, toCSV } from '@core/files'
+import { fmtNum } from '@core/utils'
+import { go } from '@ui/shell/router'
+import { openExamForm, openScoreImport } from '@ui/forms'
+import { toast } from '@ui/shell/toast'
+import TeacherAvatar from '@components/common/TeacherAvatar.vue'
+import Icon from '@components/common/Icon.vue'
+import type { Exam } from '@core/types'
 
 const exs = computed(() => examsSorted().reverse())
 const examId = ref<string | null>(null)

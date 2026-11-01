@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /** 按表头导入成绩 */
 import { computed, ref } from 'vue'
-import { S, save } from '../../core/app'
-import { examById } from '../../core/select'
-import { findStu, parseScore, parseScoreTable, setScore } from '../../core/importers'
-import { closeModal } from '../../ui/shell/modal'
-import { toast } from '../../ui/shell/toast'
+import { S, save } from '@core/app'
+import { examById } from '@core/select'
+import { findStu, parseScore, parseScoreTable, setScore } from '@core/importers'
+import { closeModal } from '@ui/shell/modal'
+import { toast } from '@ui/shell/toast'
 
 const props = defineProps<{ id: string }>()
 const ex = computed(() => examById(props.id))

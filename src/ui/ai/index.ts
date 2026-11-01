@@ -2,8 +2,8 @@
  * AI 助手页面级状态与对话 / 批量任务调度
  */
 import { reactive, ref } from 'vue'
-import { S, save } from '../../core/app'
-import { AIC, Mask } from '../../core/ai'
+import { S, save } from '@core/app'
+import { AIC, Mask } from '@core/ai'
 import {
   TPLS,
   batchCombinedPrompt,
@@ -19,18 +19,18 @@ import {
   type Tpl,
   type TplJob,
   type TplValues
-} from '../../core/aicontext'
-import { examById, prevExam, stuById } from '../../core/select'
-import { uid, todayStr } from '../../core/utils'
-import { toast } from '../shell/toast'
-import { openModal, closeModal } from '../shell/modal'
-import { closeDrawer } from '../shell/drawer'
-import { go } from '../shell/router'
+} from '@core/aicontext'
+import { examById, prevExam, stuById } from '@core/select'
+import { uid, todayStr } from '@core/utils'
+import { toast } from '@ui/shell/toast'
+import { openModal, closeModal } from '@ui/shell/modal'
+import { closeDrawer } from '@ui/shell/drawer'
+import { go } from '@ui/shell/router'
 import { tplReader } from './tplReader'
 import { scrollThread } from './thread'
-import TemplateFormModal from '../../components/ai/TemplateFormModal.vue'
-import PromptCopyModal from '../../components/ai/PromptCopyModal.vue'
-import type { BatchItem, Chat, ChatMessage } from '../../core/types'
+import TemplateFormModal from '@components/ai/TemplateFormModal.vue'
+import PromptCopyModal from '@components/ai/PromptCopyModal.vue'
+import type { BatchItem, Chat, ChatMessage } from '@core/types'
 
 /** 滚动回调注册点：AiView 挂载时注册，见 ui/ai/thread.ts */
 export { threadHook } from './thread'

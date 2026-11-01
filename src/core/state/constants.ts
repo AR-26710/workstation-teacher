@@ -4,7 +4,7 @@
  * 职责：只放"不会变的参照数据"。纯常量，无任何依赖与副作用。
  */
 
-import type { Reason } from '../types'
+import type { Reason } from '@core/types'
 
 export const SUBJECT_PRESETS: Record<string, [string, number][]> = {
   小学: [

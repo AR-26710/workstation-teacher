@@ -5,10 +5,10 @@
  * 是一张纯数据表 + 取值辅助函数，不含调度与网络请求。
  */
 
-import { S } from '../app'
+import { S } from '@core/app'
 import { classContext, examContext, studentContext } from './context'
-import { examById, latestExam, prevExam, stuById } from '../select'
-import type { Exam, Student } from '../types'
+import { examById, latestExam, prevExam, stuById } from '@core/select'
+import type { Exam, Student } from '@core/types'
 
 /* ---------- 模板 ---------- */
 

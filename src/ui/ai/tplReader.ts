@@ -7,6 +7,6 @@
  * ui/ai → components/TemplateFormModal → ui/ai 的环。
  */
 
-import type { TplValues } from '../../core/aicontext'
+import type { TplValues } from '@core/aicontext'
 
 export const tplReader: { fn: (() => TplValues | null) | null } = { fn: null }

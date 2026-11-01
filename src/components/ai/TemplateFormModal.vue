@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /** AI 模板参数表单（弹窗内容） */
 import { computed, onBeforeUnmount, onMounted, reactive } from 'vue'
-import { S } from '../../core/app'
-import { examsSorted, prevExam, stuById, studentsByNo, examById } from '../../core/select'
-import { fieldDefault, tplById, type TplField, type TplValues } from '../../core/aicontext'
-import { tplReader } from '../../ui/ai/tplReader'
-import { toast } from '../../ui/shell/toast'
-import Icon from '../common/Icon.vue'
+import { S } from '@core/app'
+import { examsSorted, prevExam, stuById, studentsByNo, examById } from '@core/select'
+import { fieldDefault, tplById, type TplField, type TplValues } from '@core/aicontext'
+import { tplReader } from '@ui/ai/tplReader'
+import { toast } from '@ui/shell/toast'
+import Icon from '@components/common/Icon.vue'
 
 const props = defineProps<{ tplId: string; pre?: { sid?: string | null; exam?: string | null; cmp?: string | null } }>()
 

@@ -5,11 +5,11 @@
  * 并提供模板字段默认值与下拉名单。
  */
 
-import { Mask } from '../ai'
-import { examsSorted, studentsByNo } from '../select'
+import { Mask } from '@core/ai'
+import { examsSorted, studentsByNo } from '@core/select'
 import { sysPrompt } from './context'
 import type { TplJob, TplField } from './templates'
-import type { Exam, Student } from '../types'
+import type { Exam, Student } from '@core/types'
 
 /** 给网页版 AI 用的完整提示词 */
 export function fullPrompt(job: TplJob): string {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /** 批量导入学生 */
 import { computed, ref } from 'vue'
-import { S, save } from '../../core/app'
-import { parseStudentTable, importStudents } from '../../core/importers'
-import { downloadFile, toCSV } from '../../core/files'
-import { closeModal } from '../../ui/shell/modal'
-import { toast } from '../../ui/shell/toast'
-import Icon from '../common/Icon.vue'
+import { S, save } from '@core/app'
+import { parseStudentTable, importStudents } from '@core/importers'
+import { downloadFile, toCSV } from '@core/files'
+import { closeModal } from '@ui/shell/modal'
+import { toast } from '@ui/shell/toast'
+import Icon from '@components/common/Icon.vue'
 
 const text = ref('')
 const autoSeat = ref(true)

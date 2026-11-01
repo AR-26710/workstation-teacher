@@ -3,7 +3,7 @@
  * 弹窗宿主：头部标题 + 组件正文 + 底部按钮
  */
 import { computed } from 'vue'
-import { modalState, closeModal, type ModalBtn } from '../../ui/shell/modal'
+import { modalState, closeModal, type ModalBtn } from '@ui/shell/modal'
 import Icon from './Icon.vue'
 
 const o = computed(() => modalState.o)

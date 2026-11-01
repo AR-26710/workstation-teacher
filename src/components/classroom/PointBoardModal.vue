@@ -1,15 +1,15 @@
 <script setup lang="ts">
 /** 积分榜 */
 import { computed } from 'vue'
-import { S } from '../../core/app'
-import { groupName, pointsOf, stuById } from '../../core/select'
-import { ART } from '../../lib/art'
-import { downloadFile, toCSV } from '../../core/files'
-import { fmtTime } from '../../core/utils'
-import { openStudent } from '../../ui/student/actions'
-import { closeModal } from '../../ui/shell/modal'
-import StudentAvatar from '../student/StudentAvatar.vue'
-import type { Student } from '../../core/types'
+import { S } from '@core/app'
+import { groupName, pointsOf, stuById } from '@core/select'
+import { ART } from '@lib/art'
+import { downloadFile, toCSV } from '@core/files'
+import { fmtTime } from '@core/utils'
+import { openStudent } from '@ui/student/actions'
+import { closeModal } from '@ui/shell/modal'
+import StudentAvatar from '@components/student/StudentAvatar.vue'
+import type { Student } from '@core/types'
 
 interface Row {
   st: Student

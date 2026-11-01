@@ -1,19 +1,19 @@
 <script setup lang="ts">
 /** 成绩分析：总体指标、各科得分率、分数段、历次趋势、排名与关注名单 */
 import { computed, ref, watch } from 'vue'
-import { S } from '../core/app'
-import { examById, examsSorted, prevExam, shortExam, stuById } from '../core/select'
-import { examStats, rankMap } from '../core/stats'
-import { fmtNum, pct, round1 } from '../core/utils'
-import { CH } from '../lib/charts'
-import { openStudent } from '../ui/student/actions'
-import { openAITemplate } from '../ui/ai'
-import { go } from '../ui/shell/router'
-import ChartView from '../components/common/ChartView.vue'
-import StudentAvatar from '../components/student/StudentAvatar.vue'
-import TeacherAvatar from '../components/common/TeacherAvatar.vue'
-import Icon from '../components/common/Icon.vue'
-import type { Student } from '../core/types'
+import { S } from '@core/app'
+import { examById, examsSorted, prevExam, shortExam, stuById } from '@core/select'
+import { examStats, rankMap } from '@core/stats'
+import { fmtNum, pct, round1 } from '@core/utils'
+import { CH } from '@lib/charts'
+import { openStudent } from '@ui/student/actions'
+import { openAITemplate } from '@ui/ai'
+import { go } from '@ui/shell/router'
+import ChartView from '@components/common/ChartView.vue'
+import StudentAvatar from '@components/student/StudentAvatar.vue'
+import TeacherAvatar from '@components/common/TeacherAvatar.vue'
+import Icon from '@components/common/Icon.vue'
+import type { Student } from '@core/types'
 
 const exs = computed(() => examsSorted())
 const examId = ref<string | null>(null)

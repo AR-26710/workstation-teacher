@@ -5,8 +5,8 @@
  * 不含提示词构造（见 aicontext/）与对话调度（见 ui/ai/）。
  */
 
-import { S } from '../app'
-import { notify } from '../notify'
+import { S } from '@core/app'
+import { notify } from '@core/notify'
 import { presetOf, tempOf } from './presets'
 
 export interface AiError extends Error {

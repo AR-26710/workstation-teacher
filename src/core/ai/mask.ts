@@ -5,9 +5,9 @@
  * 收到结果再换回来。编号一经分配不再变动，保证历史对话可读。
  */
 
-import { S, save as saveNow } from '../app'
-import { studentsByNo } from '../select'
-import { pad2 } from '../utils'
+import { S, save as saveNow } from '@core/app'
+import { studentsByNo } from '@core/select'
+import { pad2 } from '@core/utils'
 
 /* ---------- 隐私脱敏：学生姓名 → 编号，结果回来再还原 ---------- */
 export const Mask = {

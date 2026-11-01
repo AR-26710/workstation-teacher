@@ -18,7 +18,13 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@core/*": ["./src/core/*"],
+      "@components/*": ["./src/components/*"],
+      "@ui/*": ["./src/ui/*"],
+      "@views/*": ["./src/views/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@styles/*": ["./src/styles/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue"]

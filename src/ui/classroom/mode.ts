@@ -2,7 +2,7 @@
  * 教室页状态（模式、考勤日期、成绩模式选中的考试、缩放视图）
  */
 import { ref } from 'vue'
-import { todayStr } from '../../core/utils'
+import { todayStr } from '@core/utils'
 
 export type ClassMode = 'daily' | 'att' | 'points' | 'grade' | 'seat'
 

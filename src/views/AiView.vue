@@ -1,19 +1,19 @@
 <script setup lang="ts">
 /** AI 助手：首页（模板 + 直接提问）与对话页（流式输出 / 批量任务） */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { S, save } from '../core/app'
-import { AIC } from '../core/ai'
-import { TPL_CATS, TPLS, sysPrompt } from '../core/aicontext'
-import { studentsByNo, examsSorted, stuById } from '../core/select'
-import { mdToHtml, exportWord } from '../core/markdown'
-import { copyText } from '../core/files'
-import { fmtTime } from '../core/utils'
-import { AIP, activeChatId, chatById, copyPromptModal, followUp, newChat, openAITemplate, regenChat, resumeBatch, saveBatchAll, saveBatchOne, saveMsgAsComment, saveMsgAsRecord, sendDirect, stopGen, threadHook, delChat } from '../ui/ai'
-import { go } from '../ui/shell/router'
-import BrandMark from '../components/common/BrandMark.vue'
-import StudentAvatar from '../components/student/StudentAvatar.vue'
-import Icon from '../components/common/Icon.vue'
-import type { ChatMessage } from '../core/types'
+import { S, save } from '@core/app'
+import { AIC } from '@core/ai'
+import { TPL_CATS, TPLS, sysPrompt } from '@core/aicontext'
+import { studentsByNo, examsSorted, stuById } from '@core/select'
+import { mdToHtml, exportWord } from '@core/markdown'
+import { copyText } from '@core/files'
+import { fmtTime } from '@core/utils'
+import { AIP, activeChatId, chatById, copyPromptModal, followUp, newChat, openAITemplate, regenChat, resumeBatch, saveBatchAll, saveBatchOne, saveMsgAsComment, saveMsgAsRecord, sendDirect, stopGen, threadHook, delChat } from '@ui/ai'
+import { go } from '@ui/shell/router'
+import BrandMark from '@components/common/BrandMark.vue'
+import StudentAvatar from '@components/student/StudentAvatar.vue'
+import Icon from '@components/common/Icon.vue'
+import type { ChatMessage } from '@core/types'
 
 const chat = computed(() => chatById(activeChatId.value))
 const input = ref('')

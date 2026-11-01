@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /** 左侧导航：品牌、全局搜索、主导航、最近对话、教师形象 */
 import { computed, ref } from 'vue'
-import { S } from '../../core/app'
-import { page, go } from '../../ui/shell/router'
-import { openChatById } from '../../ui/ai'
-import Icon from '../common/Icon.vue'
-import BrandMark from '../common/BrandMark.vue'
-import TeacherAvatar from '../common/TeacherAvatar.vue'
-import StudentAvatar from '../student/StudentAvatar.vue'
+import { S } from '@core/app'
+import { page, go } from '@ui/shell/router'
+import { openChatById } from '@ui/ai'
+import Icon from '@components/common/Icon.vue'
+import BrandMark from '@components/common/BrandMark.vue'
+import TeacherAvatar from '@components/common/TeacherAvatar.vue'
+import StudentAvatar from '@components/student/StudentAvatar.vue'
 
 const emit = defineEmits<{ (e: 'pick-student', sid: string): void }>()
 

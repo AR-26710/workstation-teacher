@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /** 新建 / 编辑考试（弹窗内容） */
 import { computed, onMounted, reactive, ref } from 'vue'
-import { S, save } from '../../core/app'
-import { examById, examsSorted } from '../../core/select'
-import { todayStr, uid } from '../../core/utils'
-import { closeModal, confirm } from '../../ui/shell/modal'
-import { toast } from '../../ui/shell/toast'
-import { go } from '../../ui/shell/router'
-import type { Exam, Subject } from '../../core/types'
+import { S, save } from '@core/app'
+import { examById, examsSorted } from '@core/select'
+import { todayStr, uid } from '@core/utils'
+import { closeModal, confirm } from '@ui/shell/modal'
+import { toast } from '@ui/shell/toast'
+import { go } from '@ui/shell/router'
+import type { Exam, Subject } from '@core/types'
 
 const EXAM_TYPES = ['月考', '期中', '期末', '周测', '单元测', '模拟考', '其他']
 

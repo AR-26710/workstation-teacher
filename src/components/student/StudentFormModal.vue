@@ -1,15 +1,15 @@
 <script setup lang="ts">
 /** 添加 / 编辑学生表单（弹窗内容） */
 import { computed, onMounted, ref } from 'vue'
-import { S, save } from '../../core/app'
-import { FAMILY_TYPES, ROLES, TAG_POOL } from '../../core/state'
-import { allSeats, autoGroups, firstEmptySeat, seatMap, seatText, stuById } from '../../core/select'
-import { nextNo } from '../../core/state'
-import { deepClone, uid } from '../../core/utils'
-import { closeModal, confirm } from '../../ui/shell/modal'
-import { toast } from '../../ui/shell/toast'
-import { removeStudent } from '../../core/students'
-import type { Gender, Student } from '../../core/types'
+import { S, save } from '@core/app'
+import { FAMILY_TYPES, ROLES, TAG_POOL } from '@core/state'
+import { allSeats, autoGroups, firstEmptySeat, seatMap, seatText, stuById } from '@core/select'
+import { nextNo } from '@core/state'
+import { deepClone, uid } from '@core/utils'
+import { closeModal, confirm } from '@ui/shell/modal'
+import { toast } from '@ui/shell/toast'
+import { removeStudent } from '@core/students'
+import type { Gender, Student } from '@core/types'
 
 const props = defineProps<{ sid?: string | null; presetSeat?: string | null }>()
 

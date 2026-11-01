@@ -6,8 +6,8 @@
  */
 
 import { DEFAULT_REASONS, SUBJECT_PRESETS } from './constants'
-import { deepClone } from '../utils'
-import type { AiSettings, AppState, Countdown, Settings, Subject } from '../types'
+import { deepClone } from '@core/utils'
+import type { AiSettings, AppState, Countdown, Settings, Subject } from '@core/types'
 
 export const VERSION = '1.0.0'
 export const STORE_KEY = 'bzr-workbench-v1'

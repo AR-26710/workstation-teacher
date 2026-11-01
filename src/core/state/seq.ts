@@ -4,7 +4,7 @@
  * 职责：从现有名单里找出最大尾号并 +1，保持位数与前缀一致。
  */
 
-import { pad2 } from '../utils'
+import { pad2 } from '@core/utils'
 
 /** 学号顺延：找出最大尾号 +1 */
 export function nextNo(students: { no?: string }[], len = 2): string {

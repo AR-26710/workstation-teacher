@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { toasts } from '../../ui/shell/toast'
+import { toasts } from '@ui/shell/toast'
 </script>
 
 <template>

@@ -5,14 +5,14 @@
  * 供 ui/ai 的批量调度器调用。
  */
 
-import { S } from '../app'
-import { Mask } from '../ai'
-import { examById, prevExam, stuById } from '../select'
-import { rankMap } from '../stats'
+import { S } from '@core/app'
+import { Mask } from '@core/ai'
+import { examById, prevExam, stuById } from '@core/select'
+import { rankMap } from '@core/stats'
 import { studentContext, sysPrompt } from './context'
 import { commentPrompt } from './templates'
 import type { Tpl, TplValues } from './templates'
-import type { Student } from '../types'
+import type { Student } from '@core/types'
 
 /* ---------- 批量任务 ---------- */
 

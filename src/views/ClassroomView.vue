@@ -4,10 +4,10 @@
  * 随机点名、悬浮卡、拖拽排座、缩放平移
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { S, save } from '../core/app'
-import { ART } from '../lib/art'
-import { CH } from '../lib/charts'
-import { ATT } from '../core/state'
+import { S, save } from '@core/app'
+import { ART } from '@lib/art'
+import { CH } from '@lib/charts'
+import { ATT } from '@core/state'
 import {
   allSeats,
   attToday,
@@ -21,20 +21,20 @@ import {
   seatMap,
   stuById,
   weekNo
-} from '../core/select'
-import { monthBirthdays, rankMap, weekStars } from '../core/stats'
-import { WEEK, clamp, parseDate, todayStr } from '../core/utils'
-import { downloadFile, toCSV } from '../core/files'
-import { clsMode, attDate, gradeExam, view, REDUCED, MODES } from '../ui/classroom/mode'
-import { railOpen, go } from '../ui/shell/router'
-import { addPoint, addPointAll, moveSeat, openStudent } from '../ui/student/actions'
-import { floatHook } from '../ui/classroom/float'
-import { openStudentForm, openPointBoard, openDemoClear, openImportStudents } from '../ui/forms'
-import { toast } from '../ui/shell/toast'
-import StudentAvatar from '../components/student/StudentAvatar.vue'
-import TeacherAvatar from '../components/common/TeacherAvatar.vue'
-import Icon from '../components/common/Icon.vue'
-import type { Student } from '../core/types'
+} from '@core/select'
+import { monthBirthdays, rankMap, weekStars } from '@core/stats'
+import { WEEK, clamp, parseDate, todayStr } from '@core/utils'
+import { downloadFile, toCSV } from '@core/files'
+import { clsMode, attDate, gradeExam, view, REDUCED, MODES } from '@ui/classroom/mode'
+import { railOpen, go } from '@ui/shell/router'
+import { addPoint, addPointAll, moveSeat, openStudent } from '@ui/student/actions'
+import { floatHook } from '@ui/classroom/float'
+import { openStudentForm, openPointBoard, openDemoClear, openImportStudents } from '@ui/forms'
+import { toast } from '@ui/shell/toast'
+import StudentAvatar from '@components/student/StudentAvatar.vue'
+import TeacherAvatar from '@components/common/TeacherAvatar.vue'
+import Icon from '@components/common/Icon.vue'
+import type { Student } from '@core/types'
 
 const NS = 'http://www.w3.org/2000/svg'
 

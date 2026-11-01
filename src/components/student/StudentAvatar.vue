@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /** 学生头像（由 ART 生成 SVG） */
 import { computed } from 'vue'
-import { ART } from '../../lib/art'
-import type { Student } from '../../core/types'
+import { ART } from '@lib/art'
+import type { Student } from '@core/types'
 
 const props = withDefaults(defineProps<{ st: Student; size?: number; bg?: boolean }>(), {
   size: 28,

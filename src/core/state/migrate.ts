@@ -6,8 +6,8 @@
  */
 
 import { defaultState } from './defaults'
-import { todayStr } from '../utils'
-import type { AppState } from '../types'
+import { todayStr } from '@core/utils'
+import type { AppState } from '@core/types'
 
 /**
  * 迁移 / 修复历史数据：补齐缺失字段、剔除脏数据

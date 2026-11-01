@@ -1,15 +1,15 @@
 <script setup lang="ts">
 /** 首次欢迎页：选形象 → 选示例或空班级 → 进入工作台 */
 import { ref } from 'vue'
-import { S, save, replaceState } from '../core/app'
-import { SUBJECT_PRESETS, defaultState } from '../core/state'
-import { demoState } from '../core/demo'
-import { go } from '../ui/shell/router'
-import { toast } from '../ui/shell/toast'
-import BrandMark from '../components/common/BrandMark.vue'
-import TeacherAvatar from '../components/common/TeacherAvatar.vue'
-import Icon from '../components/common/Icon.vue'
-import type { Gender } from '../core/types'
+import { S, save, replaceState } from '@core/app'
+import { SUBJECT_PRESETS, defaultState } from '@core/state'
+import { demoState } from '@core/demo'
+import { go } from '@ui/shell/router'
+import { toast } from '@ui/shell/toast'
+import BrandMark from '@components/common/BrandMark.vue'
+import TeacherAvatar from '@components/common/TeacherAvatar.vue'
+import Icon from '@components/common/Icon.vue'
+import type { Gender } from '@core/types'
 
 const g = ref<Gender>('F')
 const mode = ref<'demo' | 'blank'>('demo')

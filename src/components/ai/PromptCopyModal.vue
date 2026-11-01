@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /** 无 API 时给出可复制的提示词 */
 import { computed } from 'vue'
-import { S } from '../../core/app'
-import { studentsByNo } from '../../core/select'
-import { Mask } from '../../core/ai'
-import { copyText } from '../../core/files'
-import { go } from '../../ui/shell/router'
-import Icon from '../common/Icon.vue'
+import { S } from '@core/app'
+import { studentsByNo } from '@core/select'
+import { Mask } from '@core/ai'
+import { copyText } from '@core/files'
+import { go } from '@ui/shell/router'
+import Icon from '@components/common/Icon.vue'
 
 defineProps<{ text: string }>()
 const list = computed(() => studentsByNo())

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** 教师头像 */
 import { computed } from 'vue'
-import { ART } from '../../lib/art'
+import { ART } from '@lib/art'
 
 const props = withDefaults(defineProps<{ gender?: string; size?: number; bg?: boolean }>(), {
   gender: 'F',

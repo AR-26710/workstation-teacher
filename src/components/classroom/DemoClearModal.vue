@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /** 从示例班级切换到自己的班级 */
 import { ref } from 'vue'
-import { S, save, replaceState } from '../../core/app'
-import { SUBJECT_PRESETS, defaultState } from '../../core/state'
-import { deepClone } from '../../core/utils'
-import { closeModal } from '../../ui/shell/modal'
-import { toast } from '../../ui/shell/toast'
-import { go } from '../../ui/shell/router'
+import { S, save, replaceState } from '@core/app'
+import { SUBJECT_PRESETS, defaultState } from '@core/state'
+import { deepClone } from '@core/utils'
+import { closeModal } from '@ui/shell/modal'
+import { toast } from '@ui/shell/toast'
+import { go } from '@ui/shell/router'
 
 const name = ref('')
 const stage = ref('初中')

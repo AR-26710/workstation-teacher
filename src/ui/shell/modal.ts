@@ -3,7 +3,7 @@
  */
 import { reactive } from 'vue'
 import type { Component } from 'vue'
-import ConfirmBody from '../../components/common/ConfirmBody.vue'
+import ConfirmBody from '@components/common/ConfirmBody.vue'
 
 export interface ModalBtn {
   t: string

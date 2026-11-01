@@ -5,11 +5,11 @@
  * 只依赖 core 的查询与统计，不含模板定义，也不含调度逻辑。
  */
 
-import { S } from '../app'
-import { age, latestExam, stuById, weekNo } from '../select'
-import { examFull, examStats, rankMap, stuTrend, subjectStats } from '../stats'
-import { fmtNum, pct, round1 } from '../utils'
-import type { Exam, Student } from '../types'
+import { S } from '@core/app'
+import { age, latestExam, stuById, weekNo } from '@core/select'
+import { examFull, examStats, rankMap, stuTrend, subjectStats } from '@core/stats'
+import { fmtNum, pct, round1 } from '@core/utils'
+import type { Exam, Student } from '@core/types'
 
 /* ---------- 上下文 ---------- */
 
