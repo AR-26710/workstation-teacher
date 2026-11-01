@@ -497,6 +497,7 @@ interface DownState {
   vx: number
   vy: number
   kind: 'drag' | 'click'
+  pan: boolean
   id: number
 }
 let down: DownState | null = null
@@ -504,16 +505,10 @@ let down: DownState | null = null
 function onWheel(e: WheelEvent): void {
   const st = stageEl.value
   if (!st) return
+  if (!(e.ctrlKey || e.metaKey)) return
   e.preventDefault()
   const r = st.getBoundingClientRect()
-  if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.0022), e.clientX - r.left, e.clientY - r.top)
-  else {
-    const v = view.value
-    v.x -= e.deltaX
-    v.y -= e.deltaY
-    v.fit = false
-    applyView()
-  }
+  zoomAt(Math.exp(-e.deltaY * 0.0022), e.clientX - r.left, e.clientY - r.top)
 }
 
 function onPointerDown(e: PointerEvent): void {
@@ -531,6 +526,7 @@ function onPointerDown(e: PointerEvent): void {
     vx: v.x,
     vy: v.y,
     kind: clsMode.value === 'seat' && seat && seat.classList.contains('has') ? 'drag' : 'click',
+    pan: e.ctrlKey || e.metaKey,
     id: e.pointerId
   }
 }
@@ -562,7 +558,7 @@ function onPointerMove(e: PointerEvent): void {
         document.body.appendChild(g)
         d.seat.classList.add('dragging')
       }
-    } else if (st) st.classList.add('panning')
+    } else if (st && d.pan) st.classList.add('panning')
   }
   if (!d.moved) return
   if (d.kind === 'drag') {
@@ -577,7 +573,7 @@ function onPointerMove(e: PointerEvent): void {
       if (x !== tgt) x.classList.remove('drop-on')
     })
     if (tgt && tgt !== d.seat) tgt.classList.add('drop-on')
-  } else {
+  } else if (d.pan) {
     const v = view.value
     v.x = d.vx + dx
     v.y = d.vy + dy
