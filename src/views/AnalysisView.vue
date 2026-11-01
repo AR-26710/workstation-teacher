@@ -2,18 +2,20 @@
 /** 成绩分析：总体指标、各科得分率、分数段、历次趋势、排名与关注名单 */
 import { computed, ref, watch } from 'vue'
 import { S } from '@core/app'
-import { examById, examsSorted, prevExam, shortExam, stuById } from '@core/select'
+import { examById, examsSorted, prevExam, shortExam } from '@core/select'
 import { examStats, rankMap } from '@core/stats'
 import { fmtNum, pct, round1 } from '@core/utils'
 import { CH } from '@lib/charts'
-import { openStudent } from '@ui/student/actions'
 import { openAITemplate } from '@ui/ai'
 import { go } from '@ui/shell/router'
-import ChartView from '@components/common/ChartView.vue'
-import StudentAvatar from '@components/student/StudentAvatar.vue'
 import TeacherAvatar from '@components/common/TeacherAvatar.vue'
 import Icon from '@components/common/Icon.vue'
-import type { Student } from '@core/types'
+import AnalysisKpiRow from '@components/analysis/AnalysisKpiRow.vue'
+import AnalysisBars from '@components/analysis/AnalysisBars.vue'
+import AnalysisTrend from '@components/analysis/AnalysisTrend.vue'
+import AnalysisRankingTable from '@components/analysis/AnalysisRankingTable.vue'
+import AnalysisWatchLists from '@components/analysis/AnalysisWatchLists.vue'
+import AnalysisSubjectDetails from '@components/analysis/AnalysisSubjectDetails.vue'
 
 const exs = computed(() => examsSorted())
 const examId = ref<string | null>(null)
@@ -46,20 +48,6 @@ const ex = computed(() => examById(examId.value))
 const cx = computed(() => (cmpId.value ? examById(cmpId.value) : null))
 const es = computed(() => (ex.value ? examStats(ex.value) : null))
 const cs = computed(() => (cx.value ? examStats(cx.value) : null))
-
-interface Delta {
-  cls: string
-  text: string
-}
-
-function delta(cur: number | undefined, prev: number | undefined | null, isPct: boolean): Delta {
-  if (!cs.value || prev === undefined || prev === null || cur === undefined) return { cls: '', text: '—' }
-  const v = cur - prev
-  if (Math.abs(v) < 1e-9) return { cls: '', text: '与上次持平' }
-  const arrow = v > 0 ? '↑ ' : '↓ '
-  const amount = isPct ? round1(Math.abs(v) * 100) + ' 个百分点' : fmtNum(Math.abs(v), 1)
-  return { cls: v > 0 ? 'up' : 'dn', text: arrow + amount + ' 较' + (cx.value ? shortExam(cx.value.name) : '') }
-}
 
 /* ---------- 各科得分率 ---------- */
 const subBars = computed(() => (w: number) => {
@@ -153,11 +141,6 @@ function trendChart(se: { sn: string; vals: (number | null)[] }): (w: number) =>
   }
 }
 
-function lastVal(vals: (number | null)[]): string {
-  for (let q = vals.length - 1; q >= 0; q--) if (vals[q] !== null) return round1(vals[q] as number) + '%'
-  return '—'
-}
-
 /* ---------- 排名与关注名单 ---------- */
 const moves = computed(() => {
   const e = es.value
@@ -185,17 +168,6 @@ const fails = computed(() => {
     .sort((a, b) => b.n - a.n)
 })
 
-function subDelta(name: string): string {
-  const e = es.value
-  const c = cs.value
-  if (!e || !c) return ''
-  const s = e.subs.filter((x) => x.name === name)[0]
-  const p = c.subs.filter((q) => q.name === name)[0]
-  const dv = p && p.n && s.n ? ((s.rate as number) - (p.rate as number)) * 100 : null
-  if (dv === null) return '—'
-  return (dv >= 0 ? '+' : '') + round1(dv)
-}
-
 function onExamChange(v: string | null): void {
   examId.value = v
   cmpId.value = ''
@@ -206,37 +178,6 @@ function aiReport(): void {
   const e = ex.value
   if (!e) return
   openAITemplate('report', { exam: e.id, cmp: cmpId.value || null })
-}
-
-function aiParentBatch(): void {
-  const e = ex.value
-  if (!e) return
-  openAITemplate('parent-batch', { exam: e.id, cmp: cmpId.value || null })
-}
-
-function nameOf(sid: string): string {
-  const s = stuById(sid)
-  return s ? s.name : ''
-}
-
-function isLowSub(v: number | null | undefined, full: number): boolean {
-  return typeof v === 'number' && v < full * 0.6
-}
-
-function chUp(m: { ch: number | null }): string {
-  return m.ch && m.ch > 0 ? '↑' + m.ch : ''
-}
-
-function chDown(m: { ch: number | null }): string {
-  return m.ch && m.ch < 0 ? '↓' + -m.ch : ''
-}
-
-function negCh(m: { ch: number | null }): number {
-  return m.ch ? -m.ch : 0
-}
-
-function stuOf(sid: string): Student {
-  return S.students.filter((x) => x.id === sid)[0]
 }
 </script>
 
@@ -280,210 +221,18 @@ function stuOf(sid: string): Student {
     </template>
 
     <template v-else-if="ex && es">
-      <div class="stat-row">
-        <div class="kpi">
-          <div class="k">平均分</div>
-          <div class="v">{{ fmtNum(es.avg, 1) }}<small>/ {{ es.full }}</small></div>
-          <div class="d" :class="delta(es.rate, cs && cs.rate, true).cls">
-            {{ delta(es.rate, cs && cs.rate, true).text }}
-          </div>
-        </div>
-        <div class="kpi">
-          <div class="k">最高分</div>
-          <div class="v">{{ fmtNum(es.max, 1) }}</div>
-          <div class="d muted">{{ nameOf(es.table[0].sid) }}</div>
-        </div>
-        <div class="kpi">
-          <div class="k">及格率</div>
-          <div class="v">{{ pct(es.pass) }}</div>
-          <div class="d" :class="delta(es.pass, cs && cs.pass, true).cls">
-            {{ delta(es.pass, cs && cs.pass, true).text }}
-          </div>
-        </div>
-        <div class="kpi">
-          <div class="k">优秀率</div>
-          <div class="v">{{ pct(es.good) }}</div>
-          <div class="d" :class="delta(es.good, cs && cs.good, true).cls">
-            {{ delta(es.good, cs && cs.good, true).text }}
-          </div>
-        </div>
-        <div class="kpi">
-          <div class="k">标准差</div>
-          <div class="v">{{ fmtNum(es.sd, 1) }}</div>
-          <div class="d muted">越小说明分数越集中</div>
-        </div>
-      </div>
+      <AnalysisKpiRow :es="es" :cs="cs" :cx-id="cmpId" />
 
-      <div class="grid2">
-        <div class="panel">
-          <div class="panel-title">各科平均得分率</div>
-          <div class="panel-sub">平均分 ÷ 满分；红线为 60% 及格线</div>
-          <ChartView :fn="subBars" />
-        </div>
-        <div class="panel">
-          <div class="panel-title">总分分数段</div>
-          <div class="panel-sub">每段 {{ fmtNum(bins.step, 0) }} 分，柱上为人数</div>
-          <ChartView :fn="binBars" />
-          <div class="legend">
-            <span><i class="sq" style="background: #9ec5f4"></i>不及格段</span>
-            <span><i class="sq" :style="{ background: CH.C.s1 }"></i>及格段</span>
-            <span><i class="sq" style="background: #256abf"></i>优秀段</span>
-          </div>
-        </div>
-      </div>
+      <AnalysisBars :sub-bars="subBars" :bins="bins" :bin-bars="binBars" />
 
-      <div v-if="trendSeries" class="panel" style="margin-top: 16px">
-        <div class="panel-title">历次考试趋势</div>
-        <div class="panel-sub">
-          班级平均得分率，各图纵轴一致（{{ trendSeries.gLo }}%–{{ trendSeries.gHi }}%）便于横向比较；没考的场次留空
-        </div>
-        <div class="small-mult">
-          <div v-for="se in trendSeries.series" :key="se.sn" class="sm-cell">
-            <div class="t">{{ se.sn }}<span>{{ lastVal(se.vals) }}</span></div>
-            <ChartView :fn="trendChart(se)" />
-          </div>
-        </div>
-      </div>
+      <AnalysisTrend :trend-series="trendSeries" :trend-chart="trendChart" />
 
       <div class="grid2" style="margin-top: 16px">
-        <div class="panel" style="padding: 20px 0 6px">
-          <div style="padding: 0 20px">
-            <div class="panel-title">班级排名</div>
-            <div class="panel-sub">点姓名打开学生档案</div>
-          </div>
-          <div style="max-height: 460px; overflow: auto">
-            <table class="tbl">
-              <thead>
-                <tr>
-                  <th>名次</th>
-                  <th>姓名</th>
-                  <th v-for="s in ex.subjects" :key="s.name" class="r">{{ s.name }}</th>
-                  <th class="r">总分</th>
-                  <th v-if="cx" class="r">进退</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="m in moves" :key="m.r.sid" class="click" @click="openStudent(m.r.sid)">
-                  <td class="num">{{ m.r.rank }}</td>
-                  <td>
-                    <div class="nm"><StudentAvatar :st="stuOf(m.r.sid)" :size="22" />{{ nameOf(m.r.sid) }}</div>
-                  </td>
-                  <td v-for="s in ex.subjects" :key="s.name" class="r num" :class="{ dn: isLowSub(m.r.subs[s.name], s.full) }">
-                    {{ m.r.subs[s.name] === null ? '缺' : m.r.subs[s.name] === undefined ? '—' : m.r.subs[s.name] }}
-                  </td>
-                  <td class="r num"><b>{{ fmtNum(m.r.total, 1) }}</b></td>
-                  <td v-if="cx" class="r num">
-                    <span v-if="m.ch === null" class="muted">—</span>
-                    <span v-else-if="m.ch === 0" class="muted">0</span>
-                    <span v-else :class="m.ch > 0 ? 'up' : 'dn'">{{ chUp(m) }}{{ chDown(m) }}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">需要关注</div>
-          <div class="panel-sub">{{ cx ? '对比「' + cx.name + '」' : '选择对比考试可看进退步' }}</div>
-          <template v-if="cx">
-            <div class="flabel" style="margin: 4px 0 6px"><Icon name="star" /> 进步之星</div>
-            <div class="warn-list">
-              <button
-                v-for="m in ups"
-                :key="m.r.sid"
-                class="mini-item"
-                style="background: var(--fill)"
-                @click="openStudent(m.r.sid)"
-              >
-                <StudentAvatar :st="stuOf(m.r.sid)" :size="26" />
-                <span class="grow">{{ nameOf(m.r.sid) }}</span>
-                <span class="r"><span class="up">↑ {{ m.ch }} 名</span> · 第 {{ m.r.rank }}</span>
-              </button>
-              <div v-if="!ups.length" class="muted" style="font-size: 12.5px">暂无</div>
-            </div>
-            <div class="flabel" style="margin: 16px 0 6px">退步 5 名以上</div>
-            <div class="warn-list">
-              <button
-                v-for="m in downs"
-                :key="m.r.sid"
-                class="mini-item"
-                style="background: var(--fill)"
-                @click="openStudent(m.r.sid)"
-              >
-                <StudentAvatar :st="stuOf(m.r.sid)" :size="26" />
-                <span class="grow">{{ nameOf(m.r.sid) }}</span>
-                <span class="r"><span class="dn">↓ {{ negCh(m) }} 名</span> · 第 {{ m.r.rank }}</span>
-              </button>
-              <div v-if="!downs.length" class="muted" style="font-size: 12.5px">没有明显退步的同学</div>
-            </div>
-          </template>
-          <div class="flabel" style="margin: 16px 0 6px">两科及以上不及格</div>
-          <div class="warn-list">
-            <button
-              v-for="x in fails.slice(0, 8)"
-              :key="x.r.sid"
-              class="mini-item"
-              style="background: var(--fill)"
-              @click="openStudent(x.r.sid)"
-            >
-              <StudentAvatar :st="stuOf(x.r.sid)" :size="26" />
-              <span class="grow">{{ nameOf(x.r.sid) }}</span>
-              <span class="r"><span class="dn">{{ x.n }} 科</span></span>
-            </button>
-            <div v-if="!fails.length" class="muted" style="font-size: 12.5px">没有</div>
-          </div>
-          <div style="margin-top: 14px">
-            <button class="btn btn-light btn-sm" @click="aiParentBatch">
-              <Icon name="spark" />给退步同学家长写沟通消息
-            </button>
-          </div>
-        </div>
+        <AnalysisRankingTable :ex="ex" :cx="cx" :moves="moves" />
+        <AnalysisWatchLists :cx="cx" :ups="ups" :downs="downs" :fails="fails" />
       </div>
 
-      <div class="panel" style="margin-top: 16px; padding: 20px 0 6px">
-        <div style="padding: 0 20px">
-          <div class="panel-title">各科明细</div>
-          <div class="panel-sub">及格 = 满分的 60%，优秀 = 满分的 85%</div>
-        </div>
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>科目</th>
-              <th class="r">满分</th>
-              <th class="r">平均分</th>
-              <th class="r">得分率</th>
-              <th class="r">最高</th>
-              <th class="r">最低</th>
-              <th class="r">及格率</th>
-              <th class="r">优秀率</th>
-              <th class="r">不及格人数</th>
-              <th v-if="cs" class="r">得分率变化</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="s in es.subs" :key="s.name">
-              <td><b style="font-weight: 600">{{ s.name }}</b></td>
-              <td class="r num">{{ s.full }}</td>
-              <td class="r num">{{ fmtNum(s.avg, 1) }}</td>
-              <td class="r num">{{ pct(s.rate) }}</td>
-              <td class="r num">{{ s.max === undefined ? '—' : s.max }}</td>
-              <td class="r num">{{ s.min === undefined ? '—' : s.min }}</td>
-              <td class="r num">{{ pct(s.pass) }}</td>
-              <td class="r num">{{ pct(s.good) }}</td>
-              <td class="r num">{{ s.low || 0 }}</td>
-              <td v-if="cs" class="r num">
-                <span
-                  :class="subDelta(s.name).indexOf('-') === 0 ? 'dn' : 'up'"
-                  v-if="subDelta(s.name) !== '—'"
-                  >{{ subDelta(s.name) }}</span
-                >
-                <span v-else class="muted">—</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <AnalysisSubjectDetails :es="es" :cs="cs" />
     </template>
   </div>
 </template>

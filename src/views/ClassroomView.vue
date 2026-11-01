@@ -8,32 +8,22 @@ import { S, save } from '@core/app'
 import { ART } from '@lib/art'
 import { CH } from '@lib/charts'
 import { ATT } from '@core/state'
-import {
-  allSeats,
-  attToday,
-  countdownDays,
-  daysToBirthday,
-  examById,
-  examsSorted,
-  latestExam,
-  pointsOf,
-  prevExam,
-  seatMap,
-  stuById,
-  weekNo
-} from '@core/select'
+import { countdownDays, examById, examsSorted, latestExam, pointsOf, prevExam, seatMap, stuById, weekNo } from '@core/select'
 import { monthBirthdays, rankMap, weekStars } from '@core/stats'
 import { WEEK, clamp, parseDate, todayStr } from '@core/utils'
-import { downloadFile, toCSV } from '@core/files'
-import { clsMode, attDate, gradeExam, view, REDUCED, MODES } from '@ui/classroom/mode'
-import { railOpen, go } from '@ui/shell/router'
-import { addPoint, addPointAll, moveSeat, openStudent } from '@ui/student/actions'
+import { clsMode, attDate, gradeExam, view, REDUCED } from '@ui/classroom/mode'
+import { railOpen } from '@ui/shell/router'
+import { addPoint, moveSeat, openStudent } from '@ui/student/actions'
 import { floatHook } from '@ui/classroom/float'
-import { openStudentForm, openPointBoard, openDemoClear, openImportStudents } from '@ui/forms'
-import { toast } from '@ui/shell/toast'
-import StudentAvatar from '@components/student/StudentAvatar.vue'
-import TeacherAvatar from '@components/common/TeacherAvatar.vue'
+import { openStudentForm, openDemoClear } from '@ui/forms'
+import { useRandomPick } from '@ui/classroom/pick'
+import { useHoverCard } from '@ui/classroom/card'
 import Icon from '@components/common/Icon.vue'
+import ClassroomDock from '@components/classroom/ClassroomDock.vue'
+import PointPopover from '@components/classroom/PointPopover.vue'
+import AttendanceMenu from '@components/classroom/AttendanceMenu.vue'
+import PickCard from '@components/classroom/PickCard.vue'
+import EmptyClass from '@components/classroom/EmptyClass.vue'
 import type { Student } from '@core/types'
 
 const NS = 'http://www.w3.org/2000/svg'
@@ -43,13 +33,17 @@ const innerEl = ref<HTMLElement | null>(null)
 const stageW = ref(0)
 const stageH = ref(0)
 
-const pickedSeat = ref<string | null>(null)
 const entered = ref(false)
-const seatUndo = ref<[string, string | null, number][] | null>(null)
-const picking = ref(false)
-const pickStudent = ref<Student | null>(null)
-let pickToken = 0
-let recentPicks: string[] = []
+
+/* ---------- 随机点名 ---------- */
+const { pickedSeat, picking, pickStudent, closePick, doPick, pickGood } = useRandomPick(stageEl)
+
+/* ---------- 悬浮卡 ---------- */
+let down: { moved: boolean } | null = null
+const { cardEl, cardOn, cardHtml, cardPos, scheduleCard, scheduleHide, onCardClick, keepCard } = useHoverCard({
+  picking,
+  getDown: () => down
+})
 
 /* ---------- 场景 ---------- */
 const extra = computed(() => {
@@ -248,172 +242,14 @@ function floatAt(seat: string | null, text: string, color: string): void {
 
 floatHook.fn = floatAt
 
-/* ---------- 悬浮卡 ---------- */
-const cardEl = ref<HTMLElement | null>(null)
-const cardOn = ref(false)
-const cardHtml = ref('')
-const cardPos = ref({ x: 0, y: 0, ax: 150 })
-let cardT: number | undefined
-let hideT: number | undefined
-let hoverEl: Element | null = null
-
-function stuCardHtml(st: Student): string {
-  const a = attToday(st.id)
-  const lat = latestExam()
-  const rm = lat ? rankMap(lat) : {}
-  const pe = lat ? prevExam(lat) : null
-  const pm = pe ? rankMap(pe) : {}
-  const r = rm[st.id]
-  const ch = r && pm[st.id] ? pm[st.id].rank - r.rank : null
-  const stTxt = a ? ATT[a].t : '在校'
-  const stColor = a === 'leave' ? 'var(--amber)' : a === 'absent' ? 'var(--red)' : a === 'late' ? 'var(--blue)' : 'var(--green)'
-  const intro = [st.study, st.personality].filter(Boolean).join('；')
-  const bdd = daysToBirthday(st)
-  const bd = parseDate(st.birthday)
-  const ava = ART.avatar(st, 56, { color: ART.groupColor(st.group || 0) })
-  let h =
-    '<div class="hc-head">' +
-    ava +
-    '<div style="min-width:0"><div class="hc-name">' +
-    st.name +
-    '</div><div class="hc-role">' +
-    (st.no || '') +
-    ' · ' +
-    (st.gender === 'F' ? '女生' : '男生') +
-    (st.role ? ' · ' + st.role : '') +
-    '</div><div class="hc-status"><i style="background:' +
-    stColor +
-    '"></i>' +
-    stTxt +
-    ' · ' +
-    seatTextOf(st.seat) +
-    '</div></div></div>'
-  if (intro) h += '<div class="hc-sec"><div class="hc-k">简介：</div><div class="hc-v">' + intro + '</div></div>'
-  if (st.family || st.familyNote)
-    h += '<div class="hc-sec"><div class="hc-k">家庭：</div><div class="hc-v">' + [st.family, st.familyNote].filter(Boolean).join(' · ') + '</div></div>'
-  if (st.tags && st.tags.length)
-    h += '<div class="hc-sec"><div class="hc-k">标签：</div><div class="tags">' + st.tags.map((t) => '<span class="tag">' + t + '</span>').join('') + '</div></div>'
-  const pts = pointsOf(st.id)
-  h +=
-    '<div class="hc-stats"><div><b>' +
-    (r ? '#' + r.rank : '—') +
-    (ch ? '<small class="' + (ch > 0 ? 'up' : 'dn') + '" style="font-size:11px;margin-left:2px">' + (ch > 0 ? '↑' + ch : '↓' + -ch) + '</small>' : '') +
-    '</b><span>' +
-    (lat ? lat.name : '最近排名') +
-    '</span></div><div><b>' +
-    (pts > 0 ? '+' : '') +
-    pts +
-    '</b><span>积分</span></div><div><b>' +
-    (bd ? bd.getMonth() + 1 + '/' + bd.getDate() : '—') +
-    '</b><span>' +
-    (bdd === 0 ? '今天生日' : '生日') +
-    '</span></div></div>'
-  h +=
-    '<div class="hc-act"><button class="btn btn-sm btn-light" data-card="pt-quick" data-sid="' +
-    st.id +
-    '">+1 表扬</button><button class="btn btn-sm btn-dark" data-card="open" data-sid="' +
-    st.id +
-    '">查看档案</button></div>'
-  return h
-}
-
-function teacherCardHtml(): string {
-  const t = S.settings.teacher
-  const todo = S.todos.filter((x) => !x.done).length
-  return (
-    '<div class="hc-head">' +
-    ART.teacherAvatar(t, 56) +
-    '<div><div class="hc-name">' +
-    t.name +
-    '</div><div class="hc-role">' +
-    S.settings.className +
-    ' 班主任' +
-    (t.subject ? ' · ' + t.subject : '') +
-    '</div><div class="hc-status"><i></i>在岗 · 待办 ' +
-    todo +
-    ' 项</div></div></div>' +
-    '<div class="hc-sec"><div class="hc-k">简介：</div><div class="hc-v">全班 ' +
-    S.students.length +
-    ' 名同学的大家长，统筹班级管理、家校沟通与学生成长。</div></div>' +
-    '<div class="hc-sec"><div class="hc-k">AI 能帮你：</div><div class="tags"><span class="tag">写教案</span><span class="tag">期末评语</span><span class="tag">家长会发言稿</span><span class="tag">班会方案</span><span class="tag">家长沟通</span></div></div>' +
-    '<div class="hc-act"><button class="btn btn-sm btn-light" data-card="settings-teacher">换形象</button><button class="btn btn-sm btn-dark" data-card="go-ai">打开 AI 助手</button></div>'
-  )
-}
-
-function seatTextOf(seat: string | null): string {
-  if (!seat) return '未排座'
-  const p = seat.split('-')
-  return '第' + (+p[0] + 1) + '排 第' + (+p[1] + 1) + '座'
-}
-
-function showCard(html: string, anchor: Element): void {
-  const el = cardEl.value
-  if (!el) return
-  cardHtml.value = html
-  cardOn.value = true
-  nextTick(() => {
-    const r = anchor.getBoundingClientRect()
-    const cw = 300
-    const chh = el.offsetHeight || 260
-    let x = r.left + r.width / 2 - cw / 2
-    x = clamp(x, 12, window.innerWidth - cw - 12)
-    const below = r.bottom + chh + 16 < window.innerHeight
-    let y = below ? r.bottom + 10 : r.top - chh - 10
-    if (!below && y < 8) y = 8
-    cardPos.value = { x, y, ax: clamp(r.left + r.width / 2 - x, 20, cw - 20) }
-  })
-}
-
-function scheduleCard(el: Element): void {
-  window.clearTimeout(cardT)
-  window.clearTimeout(hideT)
-  cardT = window.setTimeout(() => {
-    if (down || picking.value || clsMode.value === 'seat' || clsMode.value === 'att' || clsMode.value === 'points') return
-    if (el.classList.contains('teacher')) showCard(teacherCardHtml(), el)
-    else {
-      const st = stuById(el.getAttribute('data-sid'))
-      if (st) showCard(stuCardHtml(st), el.querySelector('.stu') || el)
-    }
-  }, 220)
-}
-
-function scheduleHide(): void {
-  window.clearTimeout(cardT)
-  window.clearTimeout(hideT)
-  hideT = window.setTimeout(() => {
-    cardOn.value = false
-  }, 180)
-}
-
-function onCardClick(e: MouseEvent): void {
-  const t = (e.target as HTMLElement).closest('[data-card]') as HTMLElement | null
-  if (!t) return
-  const kind = t.getAttribute('data-card')
-  const sid = t.getAttribute('data-sid')
-  if (kind === 'pt-quick' && sid) {
-    const st = addPoint(sid, 1, '表扬')
-    cardOn.value = false
-    if (st) toast(st.name + ' +1')
-  } else if (kind === 'open' && sid) {
-    cardOn.value = false
-    openStudent(sid)
-  } else if (kind === 'settings-teacher') {
-    cardOn.value = false
-    go('settings', { sec: 'teacher' })
-  } else if (kind === 'go-ai') {
-    cardOn.value = false
-    go('ai')
-  }
-}
-
 /* ---------- 点评浮层 ---------- */
 const pop = ref<{ x: number; y: number; sid: string } | null>(null)
 const popCustom = ref('')
 const popSt = computed(() => (pop.value ? stuById(pop.value.sid) : null))
 const popPoints = computed(() => (pop.value ? pointsOf(pop.value.sid) : 0))
-const popStyle = computed(() => {
+const popStyle = computed<Record<string, string>>(() => {
   const p = pop.value
-  if (!p) return {}
+  if (!p) return {} as Record<string, string>
   const w = 286
   const h = 230
   const left = clamp(p.x - w / 2, 10, window.innerWidth - w - 10)
@@ -421,20 +257,30 @@ const popStyle = computed(() => {
   return { left: left + 'px', top: top + 'px' }
 })
 
+function openPointPop(st: Student, x: number, y: number): void {
+  popCustom.value = ''
+  pop.value = { x, y, sid: st.id }
+}
+
+function closePop(): void {
+  pop.value = null
+}
+
+function popAdd(d: number, r: string): void {
+  if (!pop.value) return
+  addPoint(pop.value.sid, d, r)
+  pop.value = null
+}
+
+function popCustomAdd(d: number): void {
+  if (!pop.value) return
+  const r = popCustom.value.trim() || (d > 0 ? '表现好' : '需改进')
+  addPoint(pop.value.sid, d, r)
+  pop.value = null
+}
+
 /* ---------- 考勤右键菜单 ---------- */
 const attMenu = ref<{ x: number; y: number; sid: string } | null>(null)
-const attMenuSt = computed(() => (attMenu.value ? stuById(attMenu.value.sid) : null))
-const attMenuCur = computed(() => (attMenu.value ? S.attendance[attDate.value]?.[attMenu.value.sid] || null : null))
-const attMenuLabel = computed(() => (attMenuCur.value ? ATT[attMenuCur.value].t : '出勤'))
-const attMenuStyle = computed(() => {
-  const p = attMenu.value
-  if (!p) return {}
-  const w = 168
-  const h = 190
-  const left = clamp(p.x, 8, window.innerWidth - w - 8)
-  const top = p.y + h + 16 > window.innerHeight ? Math.max(8, p.y - h) : p.y
-  return { left: left + 'px', top: top + 'px' }
-})
 
 function onSeatContext(ev: MouseEvent): void {
   if (clsMode.value !== 'att') return
@@ -467,7 +313,6 @@ function closeAttMenu(): void {
 function onDocPointerDown(e: PointerEvent): void {
   const t = e.target as Element
   const inside = (sel: string): boolean => !!(t.closest && t.closest(sel))
-  // 座位点击由 onSeatClick 处理（支持再次点击收起浮层），这里跳过
   if (pop.value && !inside('.pop') && !inside('.seat')) closePop()
   if (attMenu.value && !inside('.att-menu')) closeAttMenu()
 }
@@ -478,35 +323,8 @@ function onDocKeyDown(e: KeyboardEvent): void {
   closePop()
 }
 
-function keepCard(): void {
-  window.clearTimeout(hideT)
-}
-
-function openPointPop(st: Student, x: number, y: number): void {
-  popCustom.value = ''
-  pop.value = { x, y, sid: st.id }
-}
-
-function closePop(): void {
-  pop.value = null
-}
-
-function popAdd(d: number, r: string): void {
-  if (!pop.value) return
-  addPoint(pop.value.sid, d, r)
-  pop.value = null
-}
-
-function popCustomAdd(d: number): void {
-  if (!pop.value) return
-  const r = popCustom.value.trim() || (d > 0 ? '表现好' : '需改进')
-  addPoint(pop.value.sid, d, r)
-  pop.value = null
-}
-
 /* ---------- 座位点击 ---------- */
 function onSeatClick(seatKey: string, sid: string | null, ev: MouseEvent): void {
-  window.clearTimeout(cardT)
   cardOn.value = false
   const st = sid ? stuById(sid) : null
   if (clsMode.value === 'seat') {
@@ -549,7 +367,7 @@ interface DownState {
   pan: boolean
   id: number
 }
-let down: DownState | null = null
+let downState: DownState | null = null
 
 function onWheel(e: WheelEvent): void {
   const st = stageEl.value
@@ -566,7 +384,7 @@ function onPointerDown(e: PointerEvent): void {
   const seat = t.closest ? t.closest('.seat') : null
   const tch = t.closest ? t.closest('.teacher') : null
   const v = view.value
-  down = {
+  downState = {
     x: e.clientX,
     y: e.clientY,
     seat,
@@ -578,17 +396,17 @@ function onPointerDown(e: PointerEvent): void {
     pan: e.ctrlKey || e.metaKey,
     id: e.pointerId
   }
+  down = downState
 }
 
 function onPointerMove(e: PointerEvent): void {
-  const d = down
+  const d = downState
   if (!d) return
   const dx = e.clientX - d.x
   const dy = e.clientY - d.y
   if (!d.moved && Math.abs(dx) + Math.abs(dy) > 5) {
     d.moved = true
     cardOn.value = false
-    window.clearTimeout(cardT)
     const st = stageEl.value
     if (st) {
       try {
@@ -632,8 +450,9 @@ function onPointerMove(e: PointerEvent): void {
 }
 
 function endPointer(e: PointerEvent): void {
-  const d = down
+  const d = downState
   if (!d) return
+  downState = null
   down = null
   const st = stageEl.value
   if (st) {
@@ -657,7 +476,7 @@ function endPointer(e: PointerEvent): void {
   if (seatNode) {
     onSeatClick(seatNode.getAttribute('data-seat') || '', seatNode.getAttribute('data-sid'), e)
   } else if (d.tch) {
-    showCard(teacherCardHtml(), d.tch)
+    scheduleCard(d.tch)
   }
 }
 
@@ -665,11 +484,6 @@ function onOver(e: MouseEvent): void {
   const t = e.target as Element
   const el = t.closest ? t.closest('.seat.has, .teacher') : null
   if (!el) return
-  if (el === hoverEl) {
-    window.clearTimeout(hideT)
-    return
-  }
-  hoverEl = el
   scheduleCard(el)
 }
 
@@ -678,232 +492,13 @@ function onOut(e: MouseEvent): void {
   const el = t.closest ? t.closest('.seat.has, .teacher') : null
   const rel = e.relatedTarget as Node | null
   if (el && !(rel && el.contains(rel))) {
-    hoverEl = null
     scheduleHide()
   }
 }
 
-/* ---------- 排座动作 ---------- */
-function shuffleArr<T>(a: T[]): T[] {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    const t = a[i]
-    a[i] = a[j]
-    a[j] = t
-  }
-  return a
-}
-
-function snapshotSeats(): void {
-  seatUndo.value = S.students.map((s) => [s.id, s.seat, s.group])
-}
-
-function placePairs(pairs: (Student | null)[][]): void {
-  const desks: string[][] = []
-  for (let r = 0; r < S.settings.rows; r++)
-    for (let p = 0; p < S.settings.pairs; p++) desks.push([r + '-' + p * 2, r + '-' + (p * 2 + 1)])
-  S.students.forEach((s) => {
-    s.seat = null
-  })
-  pairs.forEach((pr, i) => {
-    const d = desks[i]
-    if (!d) return
-    if (pr[0]) pr[0].seat = d[0]
-    if (pr[1]) pr[1].seat = d[1]
-  })
-  autoGroupsImpl()
-  save()
-}
-
-function seatShuffle(): void {
-  snapshotSeats()
-  const list = shuffleArr(S.students.slice())
-  const seats = allSeats()
-  S.students.forEach((s) => {
-    s.seat = null
-  })
-  list.forEach((s, i) => {
-    s.seat = seats[i] || null
-  })
-  autoGroupsImpl()
-  save()
-  toast('已随机打乱座位')
-}
-
-function seatMentor(): void {
-  const ex = latestExam()
-  if (!ex) {
-    toast('还没有考试成绩，先去录入一次吧')
-    return
-  }
-  snapshotSeats()
-  const rm = rankMap(ex)
-  const list = S.students.slice().sort((a, b) => (rm[a.id] ? rm[a.id].rank : 999) - (rm[b.id] ? rm[b.id].rank : 999))
-  const pairs: (Student | null)[][] = []
-  while (list.length) {
-    const a = list.shift() as Student
-    const b = list.length ? (list.pop() as Student) : null
-    pairs.push([a, b])
-  }
-  placePairs(shuffleArr(pairs))
-  toast('已按「' + ex.name + '」排名：前后搭配做同桌')
-}
-
-function seatGender(): void {
-  snapshotSeats()
-  const boys = shuffleArr(S.students.filter((s) => s.gender !== 'F'))
-  const girls = shuffleArr(S.students.filter((s) => s.gender === 'F'))
-  const pairs: (Student | null)[][] = []
-  while (boys.length && girls.length)
-    pairs.push(Math.random() < 0.5 ? [boys.pop() || null, girls.pop() || null] : [girls.pop() || null, boys.pop() || null])
-  const rest = boys.concat(girls)
-  while (rest.length) pairs.push([rest.shift() || null, rest.length ? rest.shift() || null : null])
-  placePairs(shuffleArr(pairs))
-  toast('已安排男女同桌')
-}
-
-function seatUndoAct(): void {
-  if (!seatUndo.value) {
-    toast('没有可以撤销的调整')
-    return
-  }
-  const m: Record<string, [string, string | null, number]> = {}
-  seatUndo.value.forEach((x) => {
-    m[x[0]] = x
-  })
-  S.students.forEach((s) => {
-    if (m[s.id]) {
-      s.seat = m[s.id][1]
-      s.group = m[s.id][2]
-    }
-  })
-  seatUndo.value = null
-  save()
-  toast('已撤销')
-}
-
-function seatPrint(): void {
-  const m = seatMap()
-  const cols = S.settings.pairs * 2
-  let h =
-    '<!doctype html><html><head><meta charset="utf-8"><title>' +
-    S.settings.className +
-    ' 座位表</title><style>body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;padding:24px;color:#171717}h1{font-size:20px;text-align:center;margin:0 0 4px}p{text-align:center;color:#777;margin:0 0 18px;font-size:12px}.pod{width:40%;margin:0 auto 18px;text-align:center;border:1.5px solid #171717;border-radius:8px;padding:8px;font-weight:600}table{border-collapse:separate;border-spacing:6px;margin:0 auto}td{width:84px;height:46px;border:1px solid #cfcfcc;border-radius:6px;text-align:center;font-size:14px}td.gap{border:0;width:18px}td small{display:block;color:#999;font-size:10px}td.e{color:#ccc}@media print{body{padding:0}}</style></head><body>'
-  h +=
-    '<h1>' +
-    S.settings.className +
-    ' 座位表</h1><p>' +
-    (S.settings.school || '') +
-    ' · ' +
-    todayStr() +
-    ' · 讲台在上方</p><div class="pod">讲 台</div><table>'
-  for (let r = 0; r < S.settings.rows; r++) {
-    h += '<tr>'
-    for (let c = 0; c < cols; c++) {
-      const stu = m[r + '-' + c]
-      h += stu ? '<td>' + stu.name + '<small>' + (stu.no || '') + '</small></td>' : '<td class="e">空</td>'
-      if (c % 2 === 1 && c < cols - 1) h += '<td class="gap"></td>'
-    }
-    h += '</tr>'
-  }
-  h += '</table><script>setTimeout(function(){window.print()},300)<\/script></body></html>'
-  const w = window.open('', '_blank')
-  if (!w) {
-    toast('浏览器拦截了新窗口，请允许弹出窗口')
-    return
-  }
-  w.document.write(h)
-  w.document.close()
-}
-
-function autoGroupsImpl(): void {
-  S.students.forEach((s) => {
-    if (s.seat) s.group = Math.floor(+s.seat.split('-')[1] / 2)
-  })
-}
-
-/* ---------- 随机点名 ---------- */
-function closePick(): void {
-  if (picking.value) {
-    pickToken++
-    picking.value = false
-  }
-  pickStudent.value = null
-  if (stageEl.value) stageEl.value.classList.remove('picking')
-  document.querySelectorAll('.scene-svg .seat.picked').forEach((e) => e.classList.remove('picked', 'turn', 'hand'))
-  const t = document.querySelector('.scene-svg .teacher')
-  if (t) t.classList.remove('point')
-}
-
-function seatEl(seat: string): Element | null {
-  return document.querySelector('.scene-svg .seat[data-seat="' + seat + '"]')
-}
-
-function doPick(): void {
-  if (picking.value) return
-  closePick()
-  const day = S.attendance[todayStr()] || {}
-  const pool = S.students.filter((s) => s.seat && day[s.id] !== 'leave' && day[s.id] !== 'absent')
-  if (!pool.length) {
-    toast('教室里还没有同学')
-    return
-  }
-  let fresh = pool.filter((s) => recentPicks.indexOf(s.id) < 0)
-  if (!fresh.length) {
-    recentPicks = []
-    fresh = pool
-  }
-  const final = fresh[Math.floor(Math.random() * fresh.length)]
-  recentPicks.push(final.id)
-  if (recentPicks.length > Math.min(8, pool.length - 1)) recentPicks.shift()
-  picking.value = true
-  cardOn.value = false
-  if (stageEl.value) stageEl.value.classList.add('picking')
-  const steps = REDUCED ? 1 : 16
-  let i = 0
-  let delay = 55
-  let last: Element | null = null
-  const token = ++pickToken
-  const alive = (): boolean => pickToken === token && !!stageEl.value
-  function step(): void {
-    if (!alive()) {
-      if (pickToken === token) picking.value = false
-      return
-    }
-    const cand = i < steps - 1 ? pool[Math.floor(Math.random() * pool.length)] : final
-    if (last) last.classList.remove('picked')
-    last = seatEl(cand.seat as string)
-    if (last) last.classList.add('picked')
-    i++
-    if (i < steps) {
-      delay *= 1.16
-      window.setTimeout(step, delay)
-    } else window.setTimeout(done, 120)
-  }
-  function done(): void {
-    if (!alive()) {
-      if (pickToken === token) picking.value = false
-      return
-    }
-    picking.value = false
-    const el = seatEl(final.seat as string)
-    if (el) el.classList.add('turn', 'hand', 'picked')
-    const tch = document.querySelector('.scene-svg .teacher')
-    if (tch) tch.classList.add('point')
-    pickStudent.value = final
-  }
-  step()
-}
-
-function pickGood(): void {
-  const s = pickStudent.value
-  closePick()
-  if (s) addPoint(s.id, 1, '回答问题')
-}
-
 /* ---------- 空闲动画 ---------- */
 function idleTick(): void {
-  if (!S.settings.anim || REDUCED || document.hidden || down || picking.value) return
+  if (!S.settings.anim || REDUCED || document.hidden || downState || picking.value) return
   if (pickStudent.value) return
   const seats = Array.from(document.querySelectorAll('.scene-svg .seat.has:not(.ghost):not(.dim)'))
   if (!seats.length) return
@@ -926,58 +521,25 @@ function idleTick(): void {
   }
 }
 
-/* ---------- 模式栏 ---------- */
-const attStat = computed(() => {
-  const day = S.attendance[attDate.value] || {}
-  const c = { leave: 0, absent: 0, late: 0 }
-  Object.keys(day).forEach((k) => {
-    if (stuById(k) && c[day[k]] !== undefined) c[day[k]]++
-  })
-  const total = S.students.length
-  const present = total - c.leave - c.absent
-  return { c, total, present }
-})
-
-const examList = computed(() => examsSorted().reverse())
-
-watch(examList, (list) => {
-  if (!gradeExam.value || !examById(gradeExam.value)) gradeExam.value = list.length ? list[0].id : null
-})
-
-function setMode(m: typeof clsMode.value): void {
-  clsMode.value = m
+/* ---------- 模式切换（由 ClassroomDock 直接改 clsMode，这里监听做清理） ---------- */
+watch(clsMode, (m) => {
   pickedSeat.value = null
   if (m === 'att' && !attDate.value) attDate.value = todayStr()
   closePick()
   cardOn.value = false
   closePop()
   closeAttMenu()
-}
+})
 
-function attClear(): void {
-  S.attendance[attDate.value] = {}
-  save()
-  toast('已标记为全部出勤')
-}
-
-function attExport(): void {
-  const d = parseDate(attDate.value) || new Date()
-  const ym = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1)
-  const days = Object.keys(S.attendance).filter((k) => k.indexOf(ym) === 0).sort()
-  const rows: string[][] = [['学号', '姓名'].concat(days.map((k) => k.slice(5))).concat(['请假', '缺勤', '迟到'])]
-  S.students.slice().sort((a, b) => String(a.no).localeCompare(String(b.no), 'zh', { numeric: true })).forEach((s) => {
-    const c = { leave: 0, absent: 0, late: 0 }
-    const r = [s.no, s.name].concat(
-      days.map((k) => {
-        const v = S.attendance[k][s.id]
-        if (v) c[v]++
-        return v ? ATT[v].t : ''
-      })
-    )
-    rows.push(r.concat([String(c.leave), String(c.absent), String(c.late)]))
-  })
-  downloadFile(S.settings.className + '-考勤-' + ym + '.csv', toCSV(rows), 'text/csv;charset=utf-8')
-}
+watch(
+  () => examsSorted(),
+  () => {
+    if (!gradeExam.value || !examById(gradeExam.value)) {
+      const list = examsSorted()
+      gradeExam.value = list.length ? list[list.length - 1].id : null
+    }
+  }
+)
 
 /* ---------- 生命周期 ---------- */
 let ro: ResizeObserver | null = null
@@ -1074,7 +636,7 @@ defineExpose({ floatAt })
 
     <div v-if="S.demo" class="demo-bar">
       正在查看示例班级
-      <button class="btn btn-xs btn-dark" @click="openDemoClear()">开始录入我的班级</button>
+      <button class="btn btn-xs btn-dark" @click="openDemoClear">开始录入我的班级</button>
     </div>
 
     <div class="top-tools">
@@ -1089,90 +651,11 @@ defineExpose({ floatAt })
       </button>
     </div>
 
-    <div class="dock">
-      <!-- 考勤 -->
-      <div v-if="clsMode === 'att'" class="subbar">
-        <input v-model="attDate" class="inp" type="date" aria-label="考勤日期" />
-        <span>应到 <b class="num">{{ attStat.total }}</b> · 实到 <b class="num">{{ attStat.present }}</b></span>
-        <span class="muted">请假 {{ attStat.c.leave }} · 缺勤 {{ attStat.c.absent }} · 迟到 {{ attStat.c.late }}</span>
-        <span class="muted">右键学生选择考勤状态</span>
-        <button class="btn btn-sm btn-light" @click="attClear">全部出勤</button>
-        <button class="btn btn-sm btn-light" @click="attExport">导出本月</button>
-      </div>
-      <!-- 点评 -->
-      <div v-else-if="clsMode === 'points'" class="subbar">
-        <span class="muted">点学生选择加分或扣分理由</span>
-        <button class="btn btn-sm btn-light" @click="addPointAll()">全班 +1</button>
-        <button class="btn btn-sm btn-dark" @click="openPointBoard()">积分榜</button>
-      </div>
-      <!-- 成绩 -->
-      <div v-else-if="clsMode === 'grade'" class="subbar">
-        <template v-if="!examList.length">
-          <span class="muted">还没有考试成绩</span>
-          <button class="btn btn-sm btn-dark" @click="go('scores')">去录入成绩</button>
-        </template>
-        <template v-else>
-          <select v-model="gradeExam" class="sel" aria-label="选择考试">
-            <option v-for="e in examList" :key="e.id" :value="e.id">{{ e.name }}</option>
-          </select>
-          <span class="legend-ramp"
-            >后<i v-for="c in CH.SEQ" :key="c" :style="{ background: c }"></i>前</span
-          >
-          <span class="muted">桌面颜色越深，班级排名越靠前；↑↓ 表示进退 5 名以上</span>
-          <button class="btn btn-sm btn-light" @click="go('analysis')">完整分析</button>
-        </template>
-      </div>
-      <!-- 排座 -->
-      <div v-else-if="clsMode === 'seat'" class="subbar">
-        <span class="muted">拖动学生换座，或先后点两个座位</span>
-        <button class="btn btn-sm btn-light" @click="seatShuffle"><Icon name="shuffle" />随机打乱</button>
-        <button class="btn btn-sm btn-light" @click="seatMentor">优带弱同桌</button>
-        <button class="btn btn-sm btn-light" @click="seatGender">男女同桌</button>
-        <button class="btn btn-sm btn-ghost" @click="seatUndoAct">撤销</button>
-        <button class="btn btn-sm btn-dark" @click="seatPrint"><Icon name="print" />打印座位表</button>
-      </div>
+    <ClassroomDock />
 
-      <div class="seg">
-        <button v-for="m in MODES" :key="m.id" :class="{ on: clsMode === m.id }" @click="setMode(m.id)">
-          {{ m.t }}
-        </button>
-      </div>
-    </div>
+    <PickCard v-if="pickStudent" :student="pickStudent" @good="pickGood" @repick="doPick" @close="closePick" />
 
-    <!-- 随机点名结果 -->
-    <div v-if="pickStudent" class="pick-card">
-      <StudentAvatar :st="pickStudent" :size="60" />
-      <div>
-        <div class="muted" style="font-size: 12px">请回答问题</div>
-        <div class="nm">{{ pickStudent.name }}</div>
-        <div class="muted" style="font-size: 12px">
-          {{ pickStudent.no || '' }}{{ pickStudent.role ? ' · ' + pickStudent.role : '' }}
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 6px; margin-left: 10px">
-        <button class="btn btn-sm btn-dark" @click="pickGood">回答得好 +1</button>
-        <button class="btn btn-sm btn-light" @click="doPick"><Icon name="dice" />再抽一个</button>
-      </div>
-      <button class="modal-x" style="align-self: flex-start" aria-label="关闭" @click="closePick">
-        <Icon name="x" />
-      </button>
-    </div>
-
-    <div class="empty-class" :class="{ hide: S.students.length > 0 }">
-      <TeacherAvatar :gender="S.settings.teacher.gender" :size="64" />
-      <div>
-        <div style="font-weight: 700; font-size: 15px">教室还空着</div>
-        <div class="muted" style="font-size: 13px; margin: 2px 0 10px">
-          点任意一个座位添加学生，或者从 Excel 一次导入整班名单
-        </div>
-        <div style="display: flex; gap: 8px">
-          <button class="btn btn-sm btn-dark" @click="openStudentForm(null, {})">
-            <Icon name="userplus" />添加学生
-          </button>
-          <button class="btn btn-sm btn-light" @click="openImportStudents()"><Icon name="up" />批量导入</button>
-        </div>
-      </div>
-    </div>
+    <EmptyClass :gender="S.settings.teacher.gender" :class="{ hide: S.students.length > 0 }" />
 
     <!-- 悬浮卡 -->
     <div
@@ -1186,50 +669,18 @@ defineExpose({ floatAt })
       v-html="cardHtml"
     ></div>
 
-    <!-- 点评浮层 -->
-    <div v-if="pop && popSt" class="pop" :style="popStyle">
-      <div class="pop-title">
-        <StudentAvatar :st="popSt" :size="26" />{{ popSt.name
-        }}<span class="muted" style="font-weight: 400; margin-left: auto"
-          >当前 {{ popPoints > 0 ? '+' : '' }}{{ popPoints }}</span
-        >
-        <button class="pop-x" aria-label="关闭" title="关闭" @click="closePop"><Icon name="x" :size="14" /></button>
-      </div>
-      <div class="chips">
-        <button
-          v-for="r in S.settings.reasons"
-          :key="r.t"
-          :class="r.d > 0 ? 'plus' : 'minus'"
-          @click="popAdd(r.d, r.t)"
-        >
-          {{ r.t }} {{ r.d > 0 ? '+' : '' }}{{ r.d }}
-        </button>
-      </div>
-      <div style="display: flex; gap: 6px; margin-top: 10px">
-        <input v-model="popCustom" class="inp" placeholder="自定义理由" style="height: 30px; font-size: 12.5px" />
-        <button class="btn btn-xs btn-dark" @click="popCustomAdd(1)">+1</button>
-        <button class="btn btn-xs btn-light" @click="popCustomAdd(-1)">-1</button>
-      </div>
-    </div>
+    <PointPopover
+      :pop="pop"
+      :pop-custom="popCustom"
+      :pop-st="popSt"
+      :pop-points="popPoints"
+      :pop-style="popStyle"
+      @update:pop-custom="popCustom = $event"
+      @close="closePop"
+      @add="popAdd"
+      @custom-add="popCustomAdd"
+    />
 
-    <!-- 考勤右键菜单 -->
-    <div v-if="attMenu && attMenuSt" class="att-menu" :style="attMenuStyle">
-      <div class="att-menu-head">
-        <span>{{ attMenuSt.name }}</span>
-        <span class="muted">当前 {{ attMenuLabel }}</span>
-      </div>
-      <button class="att-def" :class="{ on: !attMenuCur }" @click="setAtt(null)">
-        <i></i>出勤<Icon v-if="!attMenuCur" name="check" :size="14" cls="ck" />
-      </button>
-      <button class="att-leave" :class="{ on: attMenuCur === 'leave' }" @click="setAtt('leave')">
-        <i></i>请假<Icon v-if="attMenuCur === 'leave'" name="check" :size="14" cls="ck" />
-      </button>
-      <button class="att-absent" :class="{ on: attMenuCur === 'absent' }" @click="setAtt('absent')">
-        <i></i>缺勤<Icon v-if="attMenuCur === 'absent'" name="check" :size="14" cls="ck" />
-      </button>
-      <button class="att-late" :class="{ on: attMenuCur === 'late' }" @click="setAtt('late')">
-        <i></i>迟到<Icon v-if="attMenuCur === 'late'" name="check" :size="14" cls="ck" />
-      </button>
-    </div>
+    <AttendanceMenu :att-menu="attMenu" @close="closeAttMenu" @set-status="setAtt" />
   </div>
 </template>

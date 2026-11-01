@@ -2,33 +2,14 @@
 /** 学生档案：名单、筛选、排序、导入导出 */
 import { computed, ref } from 'vue'
 import { S } from '@core/app'
-import {
-  daysToBirthday,
-  latestExam,
-  pointsOf,
-  prevExam,
-  seatText,
-  stuById,
-  studentsByNo
-} from '@core/select'
+import { daysToBirthday, latestExam, pointsOf, prevExam, studentsByNo } from '@core/select'
 import { rankMap } from '@core/stats'
 import { downloadFile, toCSV } from '@core/files'
-import { openStudent } from '@ui/student/actions'
-import { openStudentForm } from '@ui/forms'
-import { openImportStudents } from '@ui/forms'
-import StudentAvatar from '@components/student/StudentAvatar.vue'
+import { seatText } from '@core/select'
+import { openImportStudents, openStudentForm } from '@ui/forms'
 import Icon from '@components/common/Icon.vue'
-
-const STU_FILTERS: [string, string][] = [
-  ['all', '全部'],
-  ['M', '男生'],
-  ['F', '女生'],
-  ['cadre', '班干部'],
-  ['focus', '重点关注'],
-  ['board', '住校'],
-  ['bday', '本月生日'],
-  ['noseat', '未排座']
-]
+import StudentFilterBar from '@components/student/StudentFilterBar.vue'
+import StudentTable from '@components/student/StudentTable.vue'
 
 const q = ref('')
 const filter = ref('all')
@@ -92,10 +73,6 @@ function setSort(k: string): void {
   }
 }
 
-function arrow(k: string): string {
-  return sort.value === k ? (dir.value > 0 ? ' ↑' : ' ↓') : ''
-}
-
 function exportList(): void {
   const rows = [
     ['学号', '姓名', '性别', '生日', '职务', '座位', '家长姓名', '关系', '家长电话', '家庭结构', '家庭备注', '学习情况', '性格特长', '健康情况', '标签', '积分']
@@ -123,11 +100,6 @@ function exportList(): void {
   })
   downloadFile(S.settings.className + '-学生名单.csv', toCSV(rows), 'text/csv;charset=utf-8')
 }
-
-function edit(st: { id: string }): void {
-  const s = stuById(st.id)
-  if (s) openStudentForm(s, {})
-}
 </script>
 
 <template>
@@ -145,109 +117,16 @@ function edit(st: { id: string }): void {
       <button class="btn btn-dark" @click="openStudentForm(null, {})"><Icon name="userplus" />添加学生</button>
     </div>
 
-    <div class="filterbar">
-      <input v-model="q" class="inp" placeholder="搜索姓名、学号或标签" />
-      <div class="chips">
-        <button
-          v-for="f in STU_FILTERS"
-          :key="f[0]"
-          :class="{ on: filter === f[0] }"
-          @click="filter = f[0]"
-        >
-          {{ f[1] }}
-        </button>
-      </div>
-    </div>
+    <StudentFilterBar v-model:q="q" v-model:filter="filter" />
 
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th class="sortable" @click="setSort('no')">学号{{ arrow('no') }}</th>
-            <th class="sortable" @click="setSort('name')">姓名{{ arrow('name') }}</th>
-            <th>性别</th>
-            <th>座位</th>
-            <th>职务</th>
-            <th class="sortable" @click="setSort('bday')">生日{{ arrow('bday') }}</th>
-            <th>主要联系人</th>
-            <th>标签</th>
-            <th class="sortable r" @click="setSort('rank')">
-              {{ filtered.lat ? filtered.lat.name + '排名' : '排名' }}{{ arrow('rank') }}
-            </th>
-            <th class="sortable r" @click="setSort('pts')">积分{{ arrow('pts') }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!filtered.list.length">
-            <td colspan="11">
-              <div class="empty">
-                {{
-                  S.students.length
-                    ? '没有符合条件的学生'
-                    : '还没有学生，点右上角「添加学生」或「批量导入」'
-                }}
-              </div>
-            </td>
-          </tr>
-          <tr
-            v-for="s in filtered.list"
-            :key="s.id"
-            class="click"
-            @click="openStudent(s.id)"
-          >
-            <td class="num muted">{{ s.no || '' }}</td>
-            <td>
-              <div class="nm"><StudentAvatar :st="s" :size="28" />{{ s.name }}</div>
-            </td>
-            <td>{{ s.gender === 'F' ? '女' : '男' }}</td>
-            <td class="sub">{{ seatText(s.seat) }}</td>
-            <td>
-              <span v-if="s.role" class="tag gray">{{ s.role }}</span>
-              <span v-else class="muted">—</span>
-            </td>
-            <td class="num">
-              {{ s.birthday ? s.birthday.slice(5) : '—'
-              }}<span v-if="daysToBirthday(s) === 0" class="tag red">今天</span>
-            </td>
-            <td>
-              <template v-if="s.parents && s.parents[0]">
-                {{ s.parents[0].name }}
-                <span class="muted">{{ s.parents[0].rel || '' }}</span><br />
-                <span class="num muted" style="font-size: 12px">{{ s.parents[0].phone || '' }}</span>
-              </template>
-              <span v-else class="muted">—</span>
-            </td>
-            <td>
-              <div class="tags">
-                <span v-for="t in (s.tags || []).slice(0, 3)" :key="t" class="tag">{{ t }}</span>
-                <span v-if="(s.tags || []).length > 3" class="tag gray"
-                  >+{{ (s.tags || []).length - 3 }}</span
-                >
-              </div>
-            </td>
-            <td class="r num">
-              {{ filtered.rm[s.id] ? filtered.rm[s.id].rank : '—'
-              }}<span
-                v-if="filtered.rm[s.id] && prevMap[s.id] && prevMap[s.id].rank - filtered.rm[s.id].rank"
-                :class="prevMap[s.id].rank - filtered.rm[s.id].rank > 0 ? 'up' : 'dn'"
-                style="font-size: 12px"
-                >{{
-                  prevMap[s.id].rank - filtered.rm[s.id].rank > 0
-                    ? '↑' + (prevMap[s.id].rank - filtered.rm[s.id].rank)
-                    : '↓' + (filtered.rm[s.id].rank - prevMap[s.id].rank)
-                }}</span
-              >
-            </td>
-            <td class="r num">{{ pointsOf(s.id) > 0 ? '+' : '' }}{{ pointsOf(s.id) }}</td>
-            <td class="r">
-              <span class="ops"
-                ><button class="btn btn-xs btn-ghost" @click.stop="edit(s)">编辑</button></span
-              >
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <StudentTable
+      :list="filtered.list"
+      :rm="filtered.rm"
+      :lat="filtered.lat"
+      :prev-map="prevMap"
+      :sort="sort"
+      :dir="dir"
+      @set-sort="setSort"
+    />
   </div>
 </template>
