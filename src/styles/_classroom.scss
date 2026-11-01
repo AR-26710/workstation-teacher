@@ -667,6 +667,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
+
+  .pop-x {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    color: var(--ink3);
+
+    &:hover {
+      background: var(--fill);
+      color: var(--ink);
+    }
+  }
 }
 
 .pop .chips {

@@ -465,14 +465,17 @@ function closeAttMenu(): void {
 }
 
 function onDocPointerDown(e: PointerEvent): void {
-  if (!attMenu.value) return
   const t = e.target as Element
-  if (t.closest && t.closest('.att-menu')) return
-  closeAttMenu()
+  const inside = (sel: string): boolean => !!(t.closest && t.closest(sel))
+  // 座位点击由 onSeatClick 处理（支持再次点击收起浮层），这里跳过
+  if (pop.value && !inside('.pop') && !inside('.seat')) closePop()
+  if (attMenu.value && !inside('.att-menu')) closeAttMenu()
 }
 
 function onDocKeyDown(e: KeyboardEvent): void {
-  if (e.key === 'Escape') closeAttMenu()
+  if (e.key !== 'Escape') return
+  closeAttMenu()
+  closePop()
 }
 
 function keepCard(): void {
@@ -520,12 +523,14 @@ function onSeatClick(seatKey: string, sid: string | null, ev: MouseEvent): void 
     return
   }
   if (!st) {
+    closePop()
     openStudentForm(null, { seat: seatKey })
     return
   }
   if (clsMode.value === 'att') return
   if (clsMode.value === 'points') {
-    openPointPop(st, ev.clientX, ev.clientY)
+    if (pop.value && pop.value.sid === st.id) closePop()
+    else openPointPop(st, ev.clientX, ev.clientY)
     return
   }
   openStudent(st.id, clsMode.value === 'grade' ? 'scores' : 'overview')
@@ -1188,6 +1193,7 @@ defineExpose({ floatAt })
         }}<span class="muted" style="font-weight: 400; margin-left: auto"
           >当前 {{ popPoints > 0 ? '+' : '' }}{{ popPoints }}</span
         >
+        <button class="pop-x" aria-label="关闭" title="关闭" @click="closePop"><Icon name="x" :size="14" /></button>
       </div>
       <div class="chips">
         <button
