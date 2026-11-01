@@ -40,7 +40,7 @@ const { pickedSeat, picking, pickStudent, closePick, doPick, pickGood } = useRan
 
 /* ---------- 悬浮卡 ---------- */
 let down: { moved: boolean } | null = null
-const { cardEl, cardOn, cardHtml, cardPos, scheduleCard, scheduleHide, onCardClick, keepCard } = useHoverCard({
+const { cardOn, cardHtml, cardPos, scheduleCard, scheduleHide, onCardClick, keepCard } = useHoverCard({
   picking,
   getDown: () => down
 })
