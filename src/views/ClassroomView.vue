@@ -421,6 +421,60 @@ const popStyle = computed(() => {
   return { left: left + 'px', top: top + 'px' }
 })
 
+/* ---------- 考勤右键菜单 ---------- */
+const attMenu = ref<{ x: number; y: number; sid: string } | null>(null)
+const attMenuSt = computed(() => (attMenu.value ? stuById(attMenu.value.sid) : null))
+const attMenuCur = computed(() => (attMenu.value ? S.attendance[attDate.value]?.[attMenu.value.sid] || null : null))
+const attMenuLabel = computed(() => (attMenuCur.value ? ATT[attMenuCur.value].t : '出勤'))
+const attMenuStyle = computed(() => {
+  const p = attMenu.value
+  if (!p) return {}
+  const w = 168
+  const h = 190
+  const left = clamp(p.x, 8, window.innerWidth - w - 8)
+  const top = p.y + h + 16 > window.innerHeight ? Math.max(8, p.y - h) : p.y
+  return { left: left + 'px', top: top + 'px' }
+})
+
+function onSeatContext(ev: MouseEvent): void {
+  if (clsMode.value !== 'att') return
+  ev.preventDefault()
+  const el = ev.target as Element
+  const seat = el.closest ? el.closest('.seat') : null
+  const st = seat ? stuById(seat.getAttribute('data-sid')) : null
+  if (!st) {
+    closeAttMenu()
+    return
+  }
+  attMenu.value = { x: ev.clientX, y: ev.clientY, sid: st.id }
+}
+
+function setAtt(status: 'leave' | 'absent' | 'late' | null): void {
+  const m = attMenu.value
+  if (!m) return
+  const d = attDate.value
+  if (!S.attendance[d]) S.attendance[d] = {}
+  if (status) S.attendance[d][m.sid] = status
+  else delete S.attendance[d][m.sid]
+  save()
+  attMenu.value = null
+}
+
+function closeAttMenu(): void {
+  attMenu.value = null
+}
+
+function onDocPointerDown(e: PointerEvent): void {
+  if (!attMenu.value) return
+  const t = e.target as Element
+  if (t.closest && t.closest('.att-menu')) return
+  closeAttMenu()
+}
+
+function onDocKeyDown(e: KeyboardEvent): void {
+  if (e.key === 'Escape') closeAttMenu()
+}
+
 function keepCard(): void {
   window.clearTimeout(hideT)
 }
@@ -469,17 +523,7 @@ function onSeatClick(seatKey: string, sid: string | null, ev: MouseEvent): void 
     openStudentForm(null, { seat: seatKey })
     return
   }
-  if (clsMode.value === 'att') {
-    const d = attDate.value
-    if (!S.attendance[d]) S.attendance[d] = {}
-    const cur = S.attendance[d][st.id] || null
-    const order: (string | null)[] = [null, 'leave', 'absent', 'late']
-    const nx = order[(order.indexOf(cur) + 1) % order.length]
-    if (nx) S.attendance[d][st.id] = nx as 'leave' | 'absent' | 'late'
-    else delete S.attendance[d][st.id]
-    save()
-    return
-  }
+  if (clsMode.value === 'att') return
   if (clsMode.value === 'points') {
     openPointPop(st, ev.clientX, ev.clientY)
     return
@@ -902,6 +946,7 @@ function setMode(m: typeof clsMode.value): void {
   closePick()
   cardOn.value = false
   closePop()
+  closeAttMenu()
 }
 
 function attClear(): void {
@@ -979,12 +1024,16 @@ onMounted(() => {
   }
   idleTimer = window.setInterval(idleTick, 2300)
   clockTimer = window.setInterval(tickClock, 20000)
+  document.addEventListener('pointerdown', onDocPointerDown, true)
+  document.addEventListener('keydown', onDocKeyDown)
 })
 
 onBeforeUnmount(() => {
   if (ro) ro.disconnect()
   window.clearInterval(idleTimer)
   window.clearInterval(clockTimer)
+  document.removeEventListener('pointerdown', onDocPointerDown, true)
+  document.removeEventListener('keydown', onDocKeyDown)
   floatHook.fn = null
   closePick()
   const g = document.getElementById('dragGhost')
@@ -1004,6 +1053,7 @@ defineExpose({ floatAt })
       @pointermove="onPointerMove"
       @pointerup="endPointer"
       @pointercancel="endPointer"
+      @contextmenu="onSeatContext"
       @mouseover="onOver"
       @mouseout="onOut"
     >
@@ -1040,7 +1090,7 @@ defineExpose({ floatAt })
         <input v-model="attDate" class="inp" type="date" aria-label="考勤日期" />
         <span>应到 <b class="num">{{ attStat.total }}</b> · 实到 <b class="num">{{ attStat.present }}</b></span>
         <span class="muted">请假 {{ attStat.c.leave }} · 缺勤 {{ attStat.c.absent }} · 迟到 {{ attStat.c.late }}</span>
-        <span class="muted">点学生切换：出勤 → 请假 → 缺勤 → 迟到</span>
+        <span class="muted">右键学生选择考勤状态</span>
         <button class="btn btn-sm btn-light" @click="attClear">全部出勤</button>
         <button class="btn btn-sm btn-light" @click="attExport">导出本月</button>
       </div>
@@ -1154,6 +1204,26 @@ defineExpose({ floatAt })
         <button class="btn btn-xs btn-dark" @click="popCustomAdd(1)">+1</button>
         <button class="btn btn-xs btn-light" @click="popCustomAdd(-1)">-1</button>
       </div>
+    </div>
+
+    <!-- 考勤右键菜单 -->
+    <div v-if="attMenu && attMenuSt" class="att-menu" :style="attMenuStyle">
+      <div class="att-menu-head">
+        <span>{{ attMenuSt.name }}</span>
+        <span class="muted">当前 {{ attMenuLabel }}</span>
+      </div>
+      <button class="att-def" :class="{ on: !attMenuCur }" @click="setAtt(null)">
+        <i></i>出勤<Icon v-if="!attMenuCur" name="check" :size="14" cls="ck" />
+      </button>
+      <button class="att-leave" :class="{ on: attMenuCur === 'leave' }" @click="setAtt('leave')">
+        <i></i>请假<Icon v-if="attMenuCur === 'leave'" name="check" :size="14" cls="ck" />
+      </button>
+      <button class="att-absent" :class="{ on: attMenuCur === 'absent' }" @click="setAtt('absent')">
+        <i></i>缺勤<Icon v-if="attMenuCur === 'absent'" name="check" :size="14" cls="ck" />
+      </button>
+      <button class="att-late" :class="{ on: attMenuCur === 'late' }" @click="setAtt('late')">
+        <i></i>迟到<Icon v-if="attMenuCur === 'late'" name="check" :size="14" cls="ck" />
+      </button>
     </div>
   </div>
 </template>
