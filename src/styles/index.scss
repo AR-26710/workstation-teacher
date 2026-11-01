@@ -1,0 +1,55 @@
+@use './base';
+@use './layout';
+@use './classroom';
+@use './modal';
+@use './table';
+@use './ai';
+@use './settings';
+
+/* Vue 过渡：弹窗 / 抽屉 / Toast 复用原设计的动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.toast-enter-active {
+  animation: toastIn 0.2s;
+}
+.toast-leave-active {
+  transition: opacity 0.3s;
+}
+.toast-leave-to {
+  opacity: 0;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 140px;
+  transform: translateX(-50%);
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toasts .toast {
+  position: static;
+  transform: none;
+}
