@@ -4,7 +4,7 @@
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { S } from './core/app'
-import { page, go, hasRail, railOpen, isPage } from './ui/shell/router'
+import { page, go, hasRail, sideCollapsed, railCollapsed, isPage } from './ui/shell/router'
 import { drawerSid } from './ui/shell/drawer'
 import { closeModal } from './ui/shell/modal'
 import { openStudent } from './ui/student/actions'
@@ -129,7 +129,15 @@ function onPickStudent(sid: string): void {
   </template>
 
   <template v-else>
-    <div class="app" :class="{ 'with-rail': hasRail(), 'rail-open': railOpen }">
+    <div
+      class="app"
+      :class="{
+        'with-rail': hasRail(),
+        'side-collapsed': sideCollapsed,
+        'rail-collapsed': railCollapsed,
+        'rail-open': !railCollapsed
+      }"
+    >
       <AppSidebar @pick-student="onPickStudent" />
       <main class="main">
         <component :is="current" :key="page" />

@@ -568,6 +568,118 @@
   display: none;
 }
 
+.app.rail-collapsed .rail-toggle {
+  display: inline-flex;
+}
+
 .app.with-rail .rail {
   padding-top: 56px;
+}
+
+/* ---------- 侧边栏 / 概况栏折叠 ---------- */
+.app {
+  transition: grid-template-columns 0.2s ease;
+}
+
+/* 左侧折叠按钮 */
+.side-toggle {
+  margin-left: auto;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--ink3);
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--fill);
+    color: var(--ink);
+  }
+
+  svg {
+    transition: transform 0.2s;
+
+    &.rot {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+/* 左侧栏折叠：仅图标 */
+.app.side-collapsed {
+  --side-w: 64px;
+
+  .side {
+    padding: 14px 8px 10px;
+  }
+
+  .brand {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 2px 0 14px;
+  }
+
+  .side-toggle {
+    margin-left: 0;
+  }
+
+  .brand-text,
+  .search,
+  .nav-label,
+  .recent,
+  .nav .t,
+  .nav .cnt,
+  .me-name,
+  .me-sub,
+  .sign {
+    display: none;
+  }
+
+  .nav a,
+  .nav button {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .me {
+    justify-content: center;
+    padding: 8px 0;
+  }
+}
+
+/* 右侧概况栏折叠按钮（栏内） */
+.rail {
+  position: relative;
+}
+
+.rail-collapse {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--ink3);
+  z-index: 2;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--fill);
+    color: var(--ink);
+  }
+}
+
+/* 桌面端折叠概况栏：让出网格列 */
+.app.with-rail.rail-collapsed {
+  grid-template-columns: var(--side-w) 1fr;
+
+  .rail {
+    display: none;
+  }
 }

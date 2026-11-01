@@ -12,7 +12,7 @@ import { countdownDays, examById, examsSorted, latestExam, pointsOf, prevExam, s
 import { monthBirthdays, rankMap, weekStars } from '@core/stats'
 import { WEEK, clamp, parseDate, todayStr } from '@core/utils'
 import { clsMode, attDate, gradeExam, view, REDUCED } from '@ui/classroom/mode'
-import { railOpen } from '@ui/shell/router'
+import { railCollapsed } from '@ui/shell/router'
 import { addPoint, moveSeat, openStudent } from '@ui/student/actions'
 import { floatHook } from '@ui/classroom/float'
 import { openStudentForm, openDemoClear } from '@ui/forms'
@@ -646,7 +646,12 @@ defineExpose({ floatAt })
         <button class="zoom-fit" title="恢复默认大小" @click="fitView">适应</button>
         <button title="放大" aria-label="放大" @click="zoomIn"><Icon name="zin" /></button>
       </div>
-      <button class="btn btn-light btn-icon rail-toggle" title="班级概况" aria-label="班级概况" @click="railOpen = !railOpen">
+      <button
+        class="btn btn-light btn-icon rail-toggle"
+        :title="railCollapsed ? '展开班级概况' : '折叠班级概况'"
+        aria-label="班级概况"
+        @click="railCollapsed = !railCollapsed"
+      >
         <Icon name="side" />
       </button>
     </div>

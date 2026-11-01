@@ -11,7 +11,7 @@ import { exportBackup } from '@core/backup'
 import { openStudent } from '@ui/student/actions'
 import { openAITemplate } from '@ui/ai'
 import { clsMode } from '@ui/classroom/mode'
-import { go } from '@ui/shell/router'
+import { go, railCollapsed } from '@ui/shell/router'
 import StudentAvatar from '@components/student/StudentAvatar.vue'
 import Icon from '@components/common/Icon.vue'
 import type { Student } from '@core/types'
@@ -122,6 +122,14 @@ function yearsText(d: number, st: Student): string {
 
 <template>
   <aside class="rail">
+    <button
+      class="rail-collapse"
+      title="折叠概况栏"
+      aria-label="折叠概况栏"
+      @click="railCollapsed = true"
+    >
+      <Icon name="side" />
+    </button>
     <!-- 今天 -->
     <div class="rail-sec">
       <div class="rail-k">今天</div>

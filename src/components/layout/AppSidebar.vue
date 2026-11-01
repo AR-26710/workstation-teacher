@@ -2,7 +2,7 @@
 /** 左侧导航：品牌、全局搜索、主导航、最近对话、教师形象 */
 import { computed, ref } from 'vue'
 import { S } from '@core/app'
-import { page, go } from '@ui/shell/router'
+import { page, go, sideCollapsed } from '@ui/shell/router'
 import { openChatById } from '@ui/ai'
 import Icon from '@components/common/Icon.vue'
 import BrandMark from '@components/common/BrandMark.vue'
@@ -44,10 +44,18 @@ const NAV: { id: 'class' | 'students' | 'scores' | 'analysis' | 'ai'; ico: strin
   <aside class="side">
     <div class="brand">
       <BrandMark :size="30" />
-      <div>
+      <div class="brand-text">
         <div class="brand-name">班主任工作台</div>
         <div class="brand-sub">{{ S.settings.className }}</div>
       </div>
+      <button
+        class="side-toggle"
+        :title="sideCollapsed ? '展开侧边栏' : '折叠侧边栏'"
+        :aria-label="sideCollapsed ? '展开侧边栏' : '折叠侧边栏'"
+        @click="sideCollapsed = !sideCollapsed"
+      >
+        <Icon name="back" :class="{ rot: sideCollapsed }" />
+      </button>
     </div>
 
     <div class="search">
